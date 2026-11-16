@@ -1,0 +1,28 @@
+{% extends "subastas/base.html" %}
+{% load humanize %}
+{% block titulo %}Subastas abiertas · Casa de Subastas{% endblock %}
+{% block contenido %}
+<h1>Subastas abiertas</h1>
+<form method="get" class="tarjeta en-linea" role="search">
+  <div><label for="id_texto">Buscar</label>{{ formulario.texto }}</div>
+  <div><label for="id_categoria">Categoría</label>{{ formulario.categoria }}</div>
+  <div><label for="id_tipo">Tipo</label>{{ formulario.tipo }}</div>
+  <button class="boton" type="submit">Filtrar</button>
+</form>
+{% if resultados %}
+<div class="rejilla">
+  {% for r in resultados %}
+  <a class="tarjeta tarjeta-enlace" href="{% url 'detalle_subasta' r.subasta.pk %}">
+    {% with foto=r.articulo.portada %}{% if foto %}<img class="foto-portada" src="{{ foto.archivo.url }}" alt="">{% else %}<div class="foto-portada"></div>{% endif %}{% endwith %}
+    <h3>{{ r.articulo.titulo }}</h3>
+    <span><span class="etiqueta">{{ r.tipo.nombre }}</span> <span class="suave">{{ r.articulo.categoria }}</span></span>
+    <span class="precio">{{ r.precio_actual|intcomma }} fichas</span>
+    <span class="suave">{{ r.numero_pujas }} puja{{ r.numero_pujas|pluralize }} · cierra {{ r.subasta.fecha_cierre|date:"d/m/Y H:i" }}</span>
+    {% if r.mi_puja %}<span class="etiqueta {% if r.soy_lider %}bien{% else %}pendiente{% endif %}">{% if r.soy_lider %}Vas ganando{% else %}Te superaron{% endif %}</span>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="vacio">No hay subastas abiertas con esos filtros.</p>
+{% endif %}
+{% endblock %}

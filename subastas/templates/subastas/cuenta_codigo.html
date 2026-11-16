@@ -1,0 +1,16 @@
+{% extends "subastas/base.html" %}
+{% block titulo %}Código de verificación · Casa de Subastas{% endblock %}
+{% block contenido %}
+<div class="tarjeta estrecho">
+  <h1>Código de verificación</h1>
+  <p class="suave">Paso 2 de 2: escribe el código de 6 dígitos que enviamos a tu móvil. Vence en 5 minutos.</p>
+  <form method="post" novalidate>{% csrf_token %}
+    {{ formulario.as_div }}
+    <button class="boton" type="submit">Entrar</button>
+  </form>
+  {% if modo_desarrollo %}
+  <p class="suave">Modo de desarrollo: el envío es simulado; el código está en la
+    <a href="{% url 'bandeja_simulada' %}" target="_blank" rel="noopener">bandeja simulada</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

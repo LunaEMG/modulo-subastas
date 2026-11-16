@@ -1,0 +1,52 @@
+{% extends "subastas/base.html" %}
+{% load humanize %}
+{% block titulo %}Mi historial · Casa de Subastas{% endblock %}
+{% block contenido %}
+<h1>Mi historial</h1>
+<h2>Subastas ganadas</h2>
+{% if ganadas %}
+<div class="tarjeta tabla-caja">
+  <table>
+    <thead><tr><th>Artículo</th><th class="numero">Precio final</th><th>Pago</th><th></th></tr></thead>
+    <tbody>
+    {% for a in ganadas %}
+      <tr>
+        <td><a href="{% url 'detalle_subasta' a.subasta.pk %}">{{ a.subasta.articulo.titulo }}</a></td>
+        <td class="numero">{{ a.precio_final|intcomma }}</td>
+        <td>{{ a.get_estado_display }}{% if a.estado == 'PENDIENTE_PAGO' %}<br><span class="suave">límite {{ a.fecha_limite_pago|date:"d/m/Y H:i" }}</span>{% endif %}</td>
+        <td>{% if a.estado == 'PENDIENTE_PAGO' %}
+          <form method="post" action="{% url 'pagar' a.pk %}">{% csrf_token %}<button class="boton" type="submit">Pagar {{ a.precio_final|intcomma }} fichas</button></form>
+          {% elif a.estado == 'PAGADA' %}<span class="suave">Envío {{ a.referencia_envio }}</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<p class="vacio">Todavía no ganas subastas.</p>{% endif %}
+
+<h2>Mis pujas</h2>
+{% for fila in filas %}
+{% with p=fila.puja %}
+<div class="tarjeta">
+  <p><a href="{% url 'detalle_subasta' p.subasta.pk %}"><strong>{{ p.subasta.articulo.titulo }}</strong></a>
+    <span class="etiqueta">{{ fila.tipo.nombre }}</span>
+    <span class="etiqueta {% if p.estado == 'ACTIVA' %}bien{% else %}mal{% endif %}">{{ p.get_estado_display }}</span>
+    {% if fila.abierta %}<span class="suave">· precio actual {{ fila.precio_actual|intcomma }}</span>{% else %}<span class="suave">· subasta cerrada</span>{% endif %}</p>
+  <div class="tabla-caja">
+    <table>
+      <thead><tr><th>Fecha</th><th>Movimiento</th><th class="numero">Antes</th><th class="numero">Después</th></tr></thead>
+      <tbody>
+      {% for m in p.movimientos.all %}
+        <tr><td>{{ m.fecha|date:"d/m/Y H:i" }}</td><td>{{ m.get_tipo_display }}</td>
+          <td class="numero">{{ m.monto_anterior|default_if_none:"—"|intcomma }}</td>
+          <td class="numero">{{ m.monto_nuevo|default_if_none:"—"|intcomma }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endwith %}
+{% empty %}
+<p class="vacio">Todavía no has pujado.</p>
+{% endfor %}
+{% endblock %}

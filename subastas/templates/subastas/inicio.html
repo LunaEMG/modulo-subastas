@@ -1,0 +1,36 @@
+{% extends "subastas/base.html" %}
+{% block contenido %}
+<h1>Casa de Subastas</h1>
+{% if not user.is_authenticated %}
+<div class="tarjeta">
+  <p>Subastamos automóviles, relojes, videojuegos y artículos de oficina. Para vender o pujar
+    necesitas una cuenta y acreditar que vives en México.</p>
+  <div class="acciones">
+    <a class="boton" href="{% url 'entrar' %}">Entrar</a>
+    <a class="boton secundario" href="{% url 'registro' %}">Crear cuenta</a>
+  </div>
+</div>
+{% else %}
+<p>Hola, {{ user.nombre }}. Esto es lo que puedes hacer con tu cuenta:</p>
+<div class="rejilla">
+  <a class="tarjeta tarjeta-enlace" href="{% url 'buscar_subastas' %}">
+    <h3>Subastas abiertas</h3><p class="suave">Busca artículos y consulta su precio actual.</p></a>
+  {% if es_comprador %}
+  <a class="tarjeta tarjeta-enlace" href="{% url 'historial' %}">
+    <h3>Comprador</h3><p class="suave">Tus pujas, sus cambios y las subastas que ganaste.</p></a>
+  {% endif %}
+  {% if es_vendedor %}
+  <a class="tarjeta tarjeta-enlace" href="{% url 'mis_articulos' %}">
+    <h3>Vendedor</h3><p class="suave">Registra artículos, propón subastas y sigue su estado.</p></a>
+  {% endif %}
+  {% if es_gestor %}
+  <a class="tarjeta tarjeta-enlace" href="{% url 'gestor_bandeja' %}">
+    <h3>Gestor de Subastas</h3><p class="suave">Revisa artículos y valida las propuestas de subasta.</p></a>
+  {% endif %}
+  {% if es_moderador %}
+  <a class="tarjeta tarjeta-enlace" href="{% url 'moderador_bandeja' %}">
+    <h3>Moderador de Contenido</h3><p class="suave">Revisa descripciones y fotografías, retira publicaciones y aplica sanciones.</p></a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

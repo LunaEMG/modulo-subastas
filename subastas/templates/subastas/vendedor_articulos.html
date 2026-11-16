@@ -1,0 +1,28 @@
+{% extends "subastas/base.html" %}
+{% load humanize %}
+{% block titulo %}Mis artículos · Casa de Subastas{% endblock %}
+{% block contenido %}
+<div class="acciones" style="justify-content: space-between; margin-bottom: 12px;">
+  <h1 style="margin: 0;">Mis artículos</h1>
+  <a class="boton" href="{% url 'registrar_articulo' %}">Registrar artículo</a>
+</div>
+{% if articulos %}
+<div class="tarjeta tabla-caja">
+  <table>
+    <thead><tr><th>Artículo</th><th>Categoría</th><th class="numero">Costo de salida</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for articulo in articulos %}
+      <tr>
+        <td><a href="{% url 'detalle_articulo' articulo.pk %}">{{ articulo.titulo }}</a><br><span class="suave">#{{ articulo.pk }} · {{ articulo.anio }}</span></td>
+        <td>{{ articulo.categoria }}</td>
+        <td class="numero">{{ articulo.costo_salida|intcomma }} fichas</td>
+        <td>{% include "subastas/_estado_articulo.html" %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="vacio">Aún no registras artículos.</p>
+{% endif %}
+{% endblock %}

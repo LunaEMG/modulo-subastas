@@ -1,0 +1,72 @@
+{% extends "subastas/base.html" %}
+{% load humanize %}
+{% block titulo %}{{ articulo.titulo }} · Casa de Subastas{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'mis_articulos' %}">← Mis artículos</a></p>
+<h1>{{ articulo.titulo }}</h1>
+<div class="dos-columnas">
+  <div>
+    <div class="tarjeta">
+      {% include "subastas/_fotografias.html" %}
+      <h2>Descripción</h2>
+      <p>{{ articulo.descripcion|linebreaksbr }}</p>
+    </div>
+    <div class="tarjeta">
+      <h2 style="margin-top: 0;">Subastas</h2>
+      {% for fila in subastas %}
+      {% with s=fila.subasta %}
+      <div class="tarjeta">
+        <p><strong>{{ fila.tipo.nombre }}</strong> · <span class="etiqueta">{{ s.get_estado_display }}</span></p>
+        <dl class="datos">
+          <dt>Duración</dt><dd>{{ s.duracion_horas }} horas</dd>
+          <dt>Precio de salida</dt><dd>{{ s.precio_salida|intcomma }} fichas</dd>
+          {% if s.precio_reserva %}<dt>Precio reservado</dt><dd>{{ s.precio_reserva|intcomma }} fichas</dd>{% endif %}
+          {% if s.precio_compra_inmediata %}<dt>Compra inmediata</dt><dd>{{ s.precio_compra_inmediata|intcomma }} fichas</dd>{% endif %}
+          {% if s.holandesa_precio_inicial %}<dt>Holandesa</dt><dd>desde {{ s.holandesa_precio_inicial|intcomma }}, baja {{ s.holandesa_decremento|intcomma }} cada {{ s.holandesa_intervalo_min }} min</dd>{% endif %}
+          {% if s.fecha_cierre %}<dt>Cierre</dt><dd>{{ s.fecha_cierre|date:"d/m/Y H:i" }}</dd>{% endif %}
+          {% if fila.precio_actual %}<dt>Precio actual</dt><dd>{{ fila.precio_actual|intcomma }} fichas</dd>{% endif %}
+          {% if fila.adjudicacion %}{% with a=fila.adjudicacion %}
+          <dt>Precio final</dt><dd>{{ a.precio_final|intcomma }} fichas</dd>
+          <dt>Comisión (25 %)</dt><dd>{{ a.comision|intcomma }} fichas</dd>
+          <dt>Recibirás</dt><dd>{{ a.monto_vendedor|intcomma }} fichas</dd>
+          <dt>Pago</dt><dd>{{ a.get_estado_display }}{% if a.estado == 'PENDIENTE_PAGO' %} (límite {{ a.fecha_limite_pago|date:"d/m/Y H:i" }}){% endif %}</dd>
+          {% endwith %}{% endif %}
+        </dl>
+      </div>
+      {% endwith %}
+      {% empty %}
+      <p class="suave">Todavía no hay subastas para este artículo.</p>
+      {% endfor %}
+    </div>
+  </div>
+  <div>
+    <div class="tarjeta">
+      <dl class="datos">
+        <dt>Identificador</dt><dd>#{{ articulo.pk }}</dd>
+        <dt>Estado</dt><dd>{% include "subastas/_estado_articulo.html" %}</dd>
+        <dt>Categoría</dt><dd>{{ articulo.categoria }}</dd>
+        <dt>Año</dt><dd>{{ articulo.anio }}</dd>
+        <dt>Costo de salida</dt><dd>{{ articulo.costo_salida|intcomma }} fichas</dd>
+        <dt>Registrado</dt><dd>{{ articulo.fecha_registro|date:"d/m/Y H:i" }}</dd>
+      </dl>
+      <div class="acciones" style="margin-top: 12px;">
+        {% if puede_corregir %}<a class="boton" href="{% url 'corregir_articulo' articulo.pk %}">Corregir y reenviar</a>{% endif %}
+        {% if puede_proponer %}<a class="boton" href="{% url 'proponer_subasta' articulo.pk %}">Proponer subasta</a>{% endif %}
+      </div>
+    </div>
+    <div class="tarjeta">
+      <h2 style="margin-top: 0;">Historial de revisiones</h2>
+      {% for r in articulo.revisiones_gestor.all %}
+        <p><span class="etiqueta {% if r.decision == 'APROBADO' %}bien{% else %}mal{% endif %}">{{ r.get_decision_display }}</span> {{ r.get_etapa_display }} · <span class="suave">{{ r.fecha|date:"d/m/Y H:i" }}</span>{% if r.observaciones %}<br>{{ r.observaciones }}{% endif %}</p>
+      {% endfor %}
+      {% for r in articulo.revisiones_contenido.all %}
+        <p><span class="etiqueta {% if r.decision == 'APROBADO' %}bien{% else %}mal{% endif %}">{{ r.get_decision_display }}</span> Moderación de contenido · <span class="suave">{{ r.fecha|date:"d/m/Y H:i" }}</span>{% if r.motivo %}<br>{{ r.motivo }}{% endif %}</p>
+      {% endfor %}
+      {% for v in articulo.valuaciones.all %}
+        <p><span class="etiqueta {% if v.precio_avalado %}bien{% else %}mal{% endif %}">Valuación</span> {% if v.precio_avalado %}Avaló {{ v.precio_avalado|intcomma }} fichas{% else %}No avalado{% endif %} · <span class="suave">{{ v.referencia_externa }}</span></p>
+      {% endfor %}
+      {% if not articulo.revisiones_gestor.exists and not articulo.valuaciones.exists and not articulo.revisiones_contenido.exists %}<p class="suave">Sin revisiones todavía.</p>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "subastas/base.html" %}
+{% load humanize %}
+{% block titulo %}Validar propuesta · Casa de Subastas{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'gestor_bandeja' %}">← Pendientes</a></p>
+<h1>Propuesta de subasta</h1>
+<div class="tarjeta estrecho">
+  <p><strong>{{ subasta.articulo.titulo }}</strong> <span class="suave">de {{ subasta.articulo.vendedor }}</span></p>
+  <dl class="datos">
+    <dt>Tipo</dt><dd>{{ tipo.nombre }}</dd>
+    <dt>Duración</dt><dd>{{ subasta.duracion_horas }} horas</dd>
+    <dt>Precio de salida</dt><dd>{{ subasta.precio_salida|intcomma }} fichas</dd>
+    {% if subasta.precio_reserva %}<dt>Precio reservado</dt><dd>{{ subasta.precio_reserva|intcomma }} fichas</dd>{% endif %}
+    {% if subasta.precio_compra_inmediata %}<dt>Compra inmediata</dt><dd>{{ subasta.precio_compra_inmediata|intcomma }} fichas</dd>{% endif %}
+    {% if subasta.holandesa_precio_inicial %}<dt>Precio inicial</dt><dd>{{ subasta.holandesa_precio_inicial|intcomma }} fichas</dd>
+    <dt>Baja</dt><dd>{{ subasta.holandesa_decremento|intcomma }} fichas cada {{ subasta.holandesa_intervalo_min }} min</dd>{% endif %}
+    <dt>Estado</dt><dd>{{ subasta.get_estado_display }}</dd>
+    <dt>Contenido</dt><dd>{% if contenido_aprobado %}<span class="etiqueta bien">Aprobado por el moderador</span>{% else %}<span class="etiqueta mal">Sin aprobación del moderador (no se puede publicar, ERR-48)</span>{% endif %}</dd>
+  </dl>
+  {% if pendiente %}
+  <form method="post" style="margin-top: 14px;" novalidate>{% csrf_token %}
+    {{ formulario.as_div }}
+    <p class="suave">Al validar, la subasta se publica de inmediato y cierra cuando se cumpla la duración. El motivo es obligatorio para rechazar.</p>
+    <div class="acciones">
+      <button class="boton" type="submit" formaction="{% url 'validar_duracion' subasta.pk %}">Validar y publicar</button>
+      <button class="boton peligro" type="submit" formaction="{% url 'rechazar_duracion' subasta.pk %}">Rechazar</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

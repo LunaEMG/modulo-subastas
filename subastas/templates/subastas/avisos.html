@@ -1,0 +1,26 @@
+{% extends "subastas/base.html" %}
+{% block titulo %}Avisos · Casa de Subastas{% endblock %}
+{% block contenido %}
+<div class="acciones" style="justify-content: space-between; margin-bottom: 12px;">
+  <h1 style="margin: 0;">Avisos</h1>
+  {% if avisos_sin_leer %}
+  <form method="post" action="{% url 'marcar_leidas' %}">{% csrf_token %}
+    <button class="boton secundario" type="submit">Marcar todos como leídos</button>
+  </form>
+  {% endif %}
+</div>
+<p class="suave">Cada aviso también se envía a tu correo.</p>
+{% for aviso in avisos %}
+<div class="tarjeta {% if not aviso.leida_en %}no-leida{% endif %}">
+  <h3>{{ aviso.asunto }}</h3>
+  <p>{{ aviso.mensaje }}</p>
+  <p class="suave">
+    <span class="codigo-mensaje">{{ aviso.tipo }}</span>{{ aviso.fecha_creacion|date:"d/m/Y H:i" }}
+    {% for entrega in aviso.entregas.all %} · <span class="etiqueta {% if entrega.estado == 'ENVIADA' %}bien{% else %}mal{% endif %}">{{ entrega.get_canal_display }}: {{ entrega.get_estado_display }}</span>{% endfor %}
+    {% if aviso.subasta_id %} · <a href="{% url 'detalle_subasta' aviso.subasta_id %}">Ver subasta</a>{% endif %}
+  </p>
+</div>
+{% empty %}
+<p class="vacio">No tienes avisos.</p>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% load static %}<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Casa de Subastas{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'subastas/estilos.css' %}">
+</head>
+<body>
+<header class="encabezado">
+  <div class="contenedor">
+    <a class="marca" href="{% url 'inicio' %}">Casa de Subastas</a>
+    <nav class="menu" aria-label="Principal">
+      {% if user.is_authenticated %}
+        <a href="{% url 'buscar_subastas' %}">Subastas</a>
+        {% if es_comprador %}<a href="{% url 'historial' %}">Mi historial</a>{% endif %}
+        {% if es_vendedor %}<a href="{% url 'mis_articulos' %}">Mis artículos</a>{% endif %}
+        {% if es_gestor %}<a href="{% url 'gestor_bandeja' %}">Pendientes del gestor</a>{% endif %}
+        {% if es_moderador %}<a href="{% url 'moderador_bandeja' %}">Moderación</a>{% endif %}
+        <a href="{% url 'avisos' %}">Avisos{% if avisos_sin_leer %} <span class="contador">{{ avisos_sin_leer }}</span>{% endif %}</a>
+        <form method="post" action="{% url 'salir' %}">{% csrf_token %}
+          <button type="submit">Salir ({{ user.nombre }})</button>
+        </form>
+      {% else %}
+        <a href="{% url 'entrar' %}">Entrar</a>
+        <a href="{% url 'registro' %}">Registrarse</a>
+      {% endif %}
+      {% if modo_desarrollo %}<a href="{% url 'bandeja_simulada' %}">Bandeja simulada</a>{% endif %}
+    </nav>
+  </div>
+</header>
+<main class="contenedor">
+  {% if messages %}
+  <ul class="mensajes" role="status">
+    {% for mensaje in messages %}
+    <li class="mensaje {{ mensaje.level_tag }}">
+      <span class="codigo-mensaje">{{ mensaje.extra_tags }}</span>{{ mensaje.message }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% block contenido %}{% endblock %}
+</main>
+</body>
+</html>

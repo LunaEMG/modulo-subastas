@@ -1,0 +1,43 @@
+{% extends "subastas/base.html" %}
+{% load humanize %}
+{% block titulo %}Pendientes del gestor · Casa de Subastas{% endblock %}
+{% block contenido %}
+<h1>Pendientes del gestor</h1>
+<h2>Artículos por revisar (CU-06)</h2>
+{% if articulos %}
+<div class="tarjeta tabla-caja">
+  <table>
+    <thead><tr><th>Artículo</th><th>Vendedor</th><th>Categoría</th><th class="numero">Costo de salida</th></tr></thead>
+    <tbody>
+    {% for articulo in articulos %}
+      <tr>
+        <td><a href="{% url 'gestor_articulo' articulo.pk %}">{{ articulo.titulo }}</a><br><span class="suave">#{{ articulo.pk }} · {{ articulo.fecha_registro|date:"d/m/Y H:i" }}</span></td>
+        <td>{{ articulo.vendedor }}</td>
+        <td>{{ articulo.categoria }}{% if articulo.categoria.requiere_valuacion %} <span class="suave">(pasa al valuador)</span>{% endif %}</td>
+        <td class="numero">{{ articulo.costo_salida|intcomma }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<p class="vacio">No hay artículos por revisar.</p>{% endif %}
+
+<h2>Propuestas de subasta por validar (CU-07)</h2>
+{% if propuestas %}
+<div class="tarjeta tabla-caja">
+  <table>
+    <thead><tr><th>Artículo</th><th>Tipo</th><th class="numero">Duración</th><th class="numero">Precio de salida</th></tr></thead>
+    <tbody>
+    {% for subasta in propuestas %}
+      <tr>
+        <td><a href="{% url 'gestor_propuesta' subasta.pk %}">{{ subasta.articulo.titulo }}</a><br><span class="suave">{{ subasta.articulo.vendedor }}</span></td>
+        <td>{{ subasta.get_tipo_display }}</td>
+        <td class="numero">{{ subasta.duracion_horas }} h</td>
+        <td class="numero">{{ subasta.precio_salida|intcomma }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<p class="vacio">No hay propuestas por validar.</p>{% endif %}
+{% endblock %}

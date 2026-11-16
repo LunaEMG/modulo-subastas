@@ -1,0 +1,43 @@
+{% extends "subastas/base.html" %}
+{% block titulo %}Sanciones · Casa de Subastas{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'moderador_bandeja' %}">← Moderación</a></p>
+<h1>{{ sancionado.nombre }}</h1>
+<div class="dos-columnas">
+  <div class="tarjeta">
+    <dl class="datos">
+      <dt>Correo</dt><dd>{{ sancionado.correo }}</dd>
+      <dt>Cuenta</dt><dd><span class="etiqueta {% if estado == 'Activa' %}bien{% else %}mal{% endif %}">{{ estado }}</span></dd>
+      <dt>Sanciones</dt><dd>{{ sanciones|length }} de 3</dd>
+    </dl>
+    <h2>Historial de sanciones</h2>
+    {% if sanciones %}
+    <div class="tabla-caja">
+      <table>
+        <thead><tr><th>Nivel</th><th>Desde</th><th>Hasta</th><th>Motivo</th></tr></thead>
+        <tbody>
+        {% for s in sanciones %}
+          <tr><td>{{ s.nivel }} · {{ s.descripcion }}</td><td>{{ s.fecha_inicio|date:"d/m/Y" }}</td><td>{{ s.fecha_fin|date:"d/m/Y"|default:"Definitiva" }}</td><td>{{ s.motivo }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p class="vacio">Sin sanciones.</p>{% endif %}
+  </div>
+  <div class="tarjeta">
+    <h2>Aplicar sanción (CU-20)</h2>
+    {% if nivel %}
+    <p>Las sanciones son escalonadas (RN-16): la siguiente es de <strong>nivel {{ nivel }}</strong>.
+      {% if nivel == 1 %}Suspensión de 14 días.{% elif nivel == 2 %}Suspensión de 90 días.{% else %}Baja definitiva.{% endif %}</p>
+    <form method="post" action="{% url 'sancionar' sancionado.pk %}" novalidate>{% csrf_token %}
+      <input type="hidden" name="nivel" value="{{ nivel }}">
+      {{ formulario.as_div }}
+      <p class="suave">Sus pujas activas en subastas abiertas se retirarán.</p>
+      <button class="boton peligro" type="submit">Aplicar sanción de nivel {{ nivel }}</button>
+    </form>
+    {% else %}
+    <p class="vacio">El usuario ya fue dado de baja de forma definitiva.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

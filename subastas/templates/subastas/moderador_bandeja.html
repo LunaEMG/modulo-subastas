@@ -1,0 +1,60 @@
+{% extends "subastas/base.html" %}
+{% load humanize %}
+{% block titulo %}Moderación · Casa de Subastas{% endblock %}
+{% block contenido %}
+<h1>Moderación de contenido</h1>
+<h2>Contenido por revisar (CU-18)</h2>
+<p class="suave">El gestor no puede publicar una subasta hasta que apruebes su descripción y fotografías.</p>
+{% if pendientes %}
+<div class="tarjeta tabla-caja">
+  <table>
+    <thead><tr><th>Artículo</th><th>Vendedor</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for articulo in pendientes %}
+      <tr>
+        <td><a href="{% url 'moderador_articulo' articulo.pk %}">{{ articulo.titulo }}</a><br><span class="suave">#{{ articulo.pk }} · {{ articulo.categoria }}</span></td>
+        <td>{{ articulo.vendedor }}</td>
+        <td>{% include "subastas/_estado_articulo.html" %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<p class="vacio">No hay contenido por revisar.</p>{% endif %}
+
+<h2>Publicaciones activas (CU-19)</h2>
+{% if publicadas %}
+<div class="tarjeta tabla-caja">
+  <table>
+    <thead><tr><th>Artículo</th><th>Tipo</th><th>Cierra</th></tr></thead>
+    <tbody>
+    {% for subasta in publicadas %}
+      <tr>
+        <td><a href="{% url 'moderador_articulo' subasta.articulo_id %}">{{ subasta.articulo.titulo }}</a></td>
+        <td>{{ subasta.get_tipo_display }}</td>
+        <td>{{ subasta.fecha_cierre|date:"d/m/Y H:i" }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<p class="vacio">No hay publicaciones activas.</p>{% endif %}
+
+<h2>Participantes (CU-20)</h2>
+{% if participantes %}
+<div class="tarjeta tabla-caja">
+  <table>
+    <thead><tr><th>Nombre</th><th>Correo</th><th>Cuenta</th></tr></thead>
+    <tbody>
+    {% for fila in participantes %}
+      <tr>
+        <td><a href="{% url 'moderador_usuario' fila.usuario.pk %}">{{ fila.usuario.nombre }}</a></td>
+        <td>{{ fila.usuario.correo }}</td>
+        <td><span class="etiqueta {% if fila.estado == 'Activa' %}bien{% else %}mal{% endif %}">{{ fila.estado }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<p class="vacio">No hay participantes registrados.</p>{% endif %}
+{% endblock %}

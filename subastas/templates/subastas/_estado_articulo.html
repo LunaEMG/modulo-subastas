@@ -1,0 +1,1 @@
+{% with e=articulo.estado %}<span class="etiqueta {% if e == 'VENDIDO' or e == 'EN_SUBASTA' or e == 'VALUADO' %}bien{% elif e == 'RECHAZADO' or e == 'NO_AVALADO' or e == 'RETIRADO' %}mal{% else %}pendiente{% endif %}">{{ articulo.get_estado_display }}</span>{% endwith %}

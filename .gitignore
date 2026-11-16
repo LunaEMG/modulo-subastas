@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+db.sqlite3
+media/
+var/
+
+# Material de trabajo, no parte de la entrega
+.claude/
+
+# Configuración local con la clave secreta; la plantilla es .env.example
+.env

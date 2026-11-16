@@ -1,0 +1,13 @@
+{% extends "subastas/base.html" %}
+{% block titulo %}Entrar · Casa de Subastas{% endblock %}
+{% block contenido %}
+<div class="tarjeta estrecho">
+  <h1>Entrar</h1>
+  <p class="suave">Paso 1 de 2: correo y contraseña. Después te pediremos el código que llega a tu móvil.</p>
+  <form method="post" novalidate>{% csrf_token %}
+    {{ formulario.as_div }}
+    <button class="boton" type="submit">Continuar</button>
+  </form>
+  <p class="suave">¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate</a></p>
+</div>
+{% endblock %}

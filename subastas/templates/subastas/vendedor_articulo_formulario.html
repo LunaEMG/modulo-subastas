@@ -1,0 +1,21 @@
+{% extends "subastas/base.html" %}
+{% block titulo %}{{ titulo }} · Casa de Subastas{% endblock %}
+{% block contenido %}
+<div class="tarjeta estrecho">
+  <h1>{{ titulo }}</h1>
+  {% if articulo %}
+    {% with revision=articulo.revisiones_gestor.first contenido=articulo.revisiones_contenido.first %}
+    {% if revision and revision.decision == 'RECHAZADO' %}<p class="mensaje error">Motivo del gestor: {{ revision.observaciones }}</p>{% endif %}
+    {% if contenido and contenido.decision == 'RECHAZADO' %}<p class="mensaje error">Motivo del moderador: {{ contenido.motivo }}</p>{% endif %}
+    {% endwith %}
+    <p class="suave">Si subes fotografías nuevas, sustituyen a las actuales. Si no subes ninguna, se conservan.</p>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+    {{ formulario.as_div }}
+    <div class="acciones">
+      <button class="boton" type="submit">{{ boton }}</button>
+      <a class="boton secundario" href="{% if articulo %}{% url 'detalle_articulo' articulo.pk %}{% else %}{% url 'mis_articulos' %}{% endif %}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

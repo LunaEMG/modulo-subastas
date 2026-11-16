@@ -1,0 +1,22 @@
+{% extends "subastas/base.html" %}
+{% load humanize %}
+{% block titulo %}Proponer subasta · Casa de Subastas{% endblock %}
+{% block contenido %}
+<div class="tarjeta estrecho">
+  <h1>Proponer subasta</h1>
+  <p><strong>{{ articulo.titulo }}</strong><br>
+    <span class="suave">Precio mínimo avalado: {{ precio_minimo|intcomma }} fichas. La subasta arranca en ese precio.</span></p>
+  <details style="margin-bottom: 14px;">
+    <summary>¿Qué tipo de subasta elijo?</summary>
+    {% for tipo in tipos %}<p><strong>{{ tipo.nombre }}:</strong> {{ tipo.descripcion }}</p>{% endfor %}
+  </details>
+  <form method="post" novalidate>{% csrf_token %}
+    {{ formulario.as_div }}
+    <p class="suave">Llena solo los campos del tipo que elegiste. El gestor valida la duración antes de publicar.</p>
+    <div class="acciones">
+      <button class="boton" type="submit">Enviar propuesta</button>
+      <a class="boton secundario" href="{% url 'detalle_articulo' articulo.pk %}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

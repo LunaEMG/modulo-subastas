@@ -1,0 +1,7 @@
+{% with fotos=articulo.fotografias_visibles %}
+{% if fotos %}
+<div class="galeria">
+  {% for foto in fotos %}<a href="{{ foto.archivo.url }}" target="_blank" rel="noopener"><img src="{{ foto.archivo.url }}" alt="Fotografía {{ forloop.counter }} de {{ articulo.titulo }}"></a>{% endfor %}
+</div>
+{% else %}<p class="suave">Sin fotografías.</p>{% endif %}
+{% endwith %}
