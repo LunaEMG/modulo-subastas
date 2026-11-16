@@ -29,3 +29,21 @@ class CU12ComprarDeInmediato(PruebaSubastas):
         url = reverse("detalle_subasta", args=[inglesa.pk])
         respuesta = self.client.post(reverse("comprar_de_inmediato", args=[inglesa.pk]), follow=True, **self.desde(url))
         self.assertContains(respuesta, "ERR-39")
+
+    def test_comprar_ya_pasa_por_revisa_y_confirma(self):
+        """Rediseño (fase C): «Comprar ya» lleva a una confirmación con el monto; mostrarla no adjudica."""
+        confirmar = reverse("confirmar_compra_inmediata", args=[self.subasta.pk])
+        detalle = self.client.get(self.detalle)
+        self.assertContains(detalle, confirmar)
+        self.assertNotContains(detalle, f'action="{reverse("comprar_de_inmediato", args=[self.subasta.pk])}"')
+        pantalla = self.client.get(confirmar)
+        self.assertContains(pantalla, "Revisa y confirma")
+        self.assertContains(pantalla, "Comprar ya por 5,000 fichas")
+        self.assertContains(pantalla, reverse("comprar_de_inmediato", args=[self.subasta.pk]))
+        self.assertFalse(Adjudicacion.objects.exists())
+
+    def test_la_confirmacion_no_aplica_a_una_subasta_sin_compra_inmediata(self):
+        """Rediseño (fase C): en una subasta sin compra inmediata, la confirmación regresa al detalle."""
+        inglesa = self.subasta_abierta()
+        respuesta = self.client.get(reverse("confirmar_compra_inmediata", args=[inglesa.pk]))
+        self.assertRedirects(respuesta, reverse("detalle_subasta", args=[inglesa.pk]))

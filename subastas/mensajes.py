@@ -104,6 +104,7 @@ CATALOGO: dict[str, Mensaje] = {
         "usa «Retirar publicación»."
     ),
     "ERR-65": Mensaje("Solo se sanciona a vendedores y compradores."),
+    "ERR-66": Mensaje("El monto no puede pasar de {maximo:,} fichas."),
     "ERR-55": Mensaje("Este campo es obligatorio."),
     "ERR-56": Mensaje("Escribe un número entero."),
     "ERR-57": Mensaje("El valor debe ser al menos {limit_value}."),

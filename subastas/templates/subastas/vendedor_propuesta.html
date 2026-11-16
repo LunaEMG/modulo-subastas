@@ -6,17 +6,39 @@
   <h1>Proponer subasta</h1>
   <p><strong>{{ articulo.titulo }}</strong><br>
     <span class="suave">Precio mínimo avalado: {{ precio_minimo|intcomma }} fichas. La subasta arranca en ese precio.</span></p>
-  <details style="margin-bottom: 14px;">
-    <summary>¿Qué tipo de subasta elijo?</summary>
-    {% for tipo in tipos %}<p><strong>{{ tipo.nombre }}:</strong> {{ tipo.descripcion }}</p>{% endfor %}
-  </details>
+  {% if elegir_tipo %}
+  <p class="suave">Paso 1 de 2: el tipo de subasta. Después llenas solo los datos de ese tipo.</p>
+  <form method="get">
+    <fieldset class="opciones-tipo">
+      <legend>¿Qué tipo de subasta elijo?</legend>
+      {% for t in tipos %}
+      <label class="opcion-tipo">
+        <input type="radio" name="tipo" value="{{ t.codigo }}" required>
+        <span><strong>{{ t.nombre }}</strong><span class="suave">{{ t.descripcion }}</span></span>
+      </label>
+      {% endfor %}
+    </fieldset>
+    <div class="acciones">
+      <button class="boton" type="submit">Continuar</button>
+      <a class="boton secundario" href="{% url 'detalle_articulo' articulo.pk %}">Cancelar</a>
+    </div>
+  </form>
+  {% else %}
+  {% if tipo %}
+  <p class="suave">Paso 2 de 2: los datos de la subasta.</p>
+  <div class="tipo-elegido separado-abajo">
+    <p class="sin-margen"><span class="etiqueta">{{ tipo.nombre }}</span> <a href="{% url 'proponer_subasta' articulo.pk %}">Cambiar tipo</a></p>
+    <p class="suave sin-margen">{{ tipo.descripcion }}</p>
+  </div>
+  {% endif %}
   <form method="post" novalidate>{% csrf_token %}
     {{ formulario.as_div }}
-    <p class="suave">Llena solo los campos del tipo que elegiste. El gestor valida la duración antes de publicar.</p>
+    <p class="suave">El gestor valida la duración antes de publicar.</p>
     <div class="acciones">
       <button class="boton" type="submit">Enviar propuesta</button>
       <a class="boton secundario" href="{% url 'detalle_articulo' articulo.pk %}">Cancelar</a>
     </div>
   </form>
+  {% endif %}
 </div>
 {% endblock %}

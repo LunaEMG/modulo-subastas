@@ -5,11 +5,12 @@ import io
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from PIL import Image
 
 from subastas.models import Articulo, Rol, Usuario
 from subastas.reglas.articulos import ARTICULOS_DE_OFICINA, AUTOMOVILES, RELOJES, VIDEOJUEGOS
 from subastas.servicios import articulos, autenticacion, moderacion, pujas, revision
+
+from ._ilustraciones import ilustrar
 
 # Solo para pruebas locales; documentada en el README.
 CONTRASENA_DE_PRUEBA = "Subastas2026"
@@ -28,9 +29,10 @@ PREFIJO = "[Demo]"
 DURACION_DEMO = 72
 
 
-def _fotografia(color: str) -> SimpleUploadedFile:
+def _fotografia(titulo: str, color: str) -> SimpleUploadedFile:
+    """Ilustración del artículo, generada aquí mismo (sin internet)."""
     contenido = io.BytesIO()
-    Image.new("RGB", (640, 480), color).save(contenido, "PNG")
+    ilustrar(titulo, color).save(contenido, "PNG", optimize=True)
     return SimpleUploadedFile("demo.png", contenido.getvalue(), content_type="image/png")
 
 
@@ -41,11 +43,29 @@ class Command(BaseCommand):
         parser.add_argument(
             "--solo-usuarios", action="store_true", help="Crea solo los usuarios de prueba."
         )
+        parser.add_argument(
+            "--redibujar",
+            action="store_true",
+            help="Vuelve a dibujar las fotografías de los artículos de demostración ya creados.",
+        )
 
     def handle(self, *args, **opciones):
         self._crear_usuarios()
         if not opciones["solo_usuarios"]:
             self._crear_articulos()
+        if opciones["redibujar"]:
+            self._redibujar()
+
+    def _redibujar(self):
+        """Sobrescribe el archivo de cada foto visible; no crea ni borra registros (RNF-01)."""
+        redibujadas = 0
+        for articulo in Articulo.objects.filter(titulo__startswith=PREFIJO):
+            titulo = articulo.titulo.removeprefix(PREFIJO).strip()
+            for foto in articulo.fotografias_visibles:
+                with foto.archivo.open("wb") as archivo:
+                    ilustrar(titulo).save(archivo, "PNG", optimize=True)
+                redibujadas += 1
+        self.stdout.write(self.style.SUCCESS(f"Fotografías redibujadas: {redibujadas}"))
 
     def _crear_usuarios(self):
         for correo, nombre, telefono, roles in USUARIOS_DE_PRUEBA:
@@ -73,7 +93,7 @@ class Command(BaseCommand):
             descripcion=descripcion,
             anio=anio,
             costo_salida=costo,
-            fotografias=[_fotografia(color)],
+            fotografias=[_fotografia(titulo, color)],
         )
 
     def _aprobar(self, articulo):

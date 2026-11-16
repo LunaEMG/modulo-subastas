@@ -15,7 +15,11 @@ from .comunes import avisar, avisar_error, requiere_rol
 @requiere_rol(Rol.VENDEDOR)
 def mis_articulos(request):
     articulos = request.user.articulos.select_related("categoria").prefetch_related("subastas")
-    return render(request, "subastas/vendedor_articulos.html", {"articulos": articulos})
+    return render(
+        request,
+        "subastas/vendedor_articulos.html",
+        {"articulos": articulos, "por_atender": consultas.articulos_por_atender(request.user)},
+    )
 
 
 # CU-03
@@ -114,6 +118,12 @@ def proponer_subasta(request, articulo_id):
         else:
             avisar(request, "MSG-07")
             return redirect("detalle_articulo", articulo_id=articulo.pk)
+    # Dos pasos sin JavaScript: primero se elige el tipo (GET ?tipo=), luego sus campos.
+    codigo = request.POST.get("tipo") if request.method == "POST" else request.GET.get("tipo")
+    tipo = next((t for t in tipos.todos() if t.codigo == codigo), None)
+    if tipo is not None:
+        formulario.mostrar_solo(tipo)
+    # Un POST con un tipo desconocido se vuelve a pintar completo, con el error en su campo.
     return render(
         request,
         "subastas/vendedor_propuesta.html",
@@ -122,5 +132,7 @@ def proponer_subasta(request, articulo_id):
             "articulo": articulo,
             "precio_minimo": consultas.precio_minimo_avalado(articulo),
             "tipos": tipos.todos(),
+            "tipo": tipo,
+            "elegir_tipo": tipo is None and request.method != "POST",
         },
     )

@@ -20,6 +20,25 @@ def _exigir_motivo(motivo: str) -> str:
     return motivo
 
 
+def exigir_motivo(motivo: str) -> str:
+    """Las pantallas de confirmación piden el motivo antes de mostrar las consecuencias."""
+    return _exigir_motivo(motivo)
+
+
+def subasta_publicada(articulo):
+    """CU-19: la subasta abierta que se cancelaría al retirar la publicación."""
+    return articulo.subastas.filter(estado=EstadoSubasta.ABIERTA).first()
+
+
+def pujas_que_retira_la_sancion(usuario, instante):
+    """S-20: las pujas activas del sancionado en subastas que siguen abiertas."""
+    return usuario.pujas.filter(
+        estado=Puja.Estado.ACTIVA,
+        subasta__estado=EstadoSubasta.ABIERTA,
+        subasta__fecha_cierre__gt=instante,
+    )
+
+
 def _articulo(articulo_id: int) -> Articulo:
     return Articulo.objects.select_related("vendedor", "categoria").get(pk=articulo_id)
 
@@ -108,7 +127,7 @@ def retirar_publicacion(*, moderador, articulo_id: int, motivo: str):
     cuentas.exigir_rol(moderador, Rol.MODERADOR)
     motivo = _exigir_motivo(motivo)
     articulo = _articulo(articulo_id)
-    subasta = articulo.subastas.filter(estado=EstadoSubasta.ABIERTA).first()
+    subasta = subasta_publicada(articulo)
     if subasta is None or not reglas_cierre.esta_abierta(
         estado=subasta.estado, fecha_cierre=subasta.fecha_cierre, instante=reloj.ahora()
     ):
@@ -140,6 +159,20 @@ def nivel_siguiente(usuario) -> int:
     return reglas_sanciones.siguiente_nivel(usuario.sanciones.count())
 
 
+def validar_sancion(usuario, nivel=None) -> int:
+    """CU-20: las reglas que comparten la confirmación y la sanción, para que la pantalla no anuncie
+    algo que después se rechaza. S-29: el personal no se sanciona (ERR-65). RN-16: `nivel` debe ser el
+    siguiente (ERR-16) y no hay nivel tras la baja definitiva (ERR-47). Devuelve el nivel que se aplica."""
+    if not (usuario.tiene_rol(Rol.VENDEDOR) or usuario.tiene_rol(Rol.COMPRADOR)):
+        raise ErrorDeNegocio("ERR-65")
+    previas = usuario.sanciones.count()
+    nivel_esperado = reglas_sanciones.siguiente_nivel(previas)
+    reglas_sanciones.validar_nivel(
+        nivel=nivel_esperado if nivel is None else int(nivel), sanciones_previas=previas
+    )
+    return nivel_esperado
+
+
 @transaction.atomic
 def sancionar(*, moderador, usuario_id: int, motivo: str, nivel: int | None = None) -> Sancion:
     """CU-20. `nivel` es el que el moderador vio en pantalla: si otro sancionó antes, ya no
@@ -147,14 +180,7 @@ def sancionar(*, moderador, usuario_id: int, motivo: str, nivel: int | None = No
     cuentas.exigir_rol(moderador, Rol.MODERADOR)
     motivo = _exigir_motivo(motivo)
     usuario = get_user_model().objects.get(pk=usuario_id)
-    if not (usuario.tiene_rol(Rol.VENDEDOR) or usuario.tiene_rol(Rol.COMPRADOR)):
-        raise ErrorDeNegocio("ERR-65")
-    previas = usuario.sanciones.count()
-    # RN-16
-    nivel_esperado = reglas_sanciones.siguiente_nivel(previas)
-    reglas_sanciones.validar_nivel(
-        nivel=nivel_esperado if nivel is None else int(nivel), sanciones_previas=previas
-    )
+    nivel_esperado = validar_sancion(usuario, nivel)
     instante = reloj.ahora()
     sancion = Sancion.objects.create(
         usuario=usuario,
@@ -165,13 +191,7 @@ def sancionar(*, moderador, usuario_id: int, motivo: str, nivel: int | None = No
         fecha_fin=reglas_sanciones.calcular_fecha_fin(nivel_esperado, instante),
     )
     # S-20
-    _retirar_pujas(
-        usuario.pujas.filter(
-            estado=Puja.Estado.ACTIVA,
-            subasta__estado=EstadoSubasta.ABIERTA,
-            subasta__fecha_cierre__gt=instante,
-        ).select_related("comprador")
-    )
+    _retirar_pujas(pujas_que_retira_la_sancion(usuario, instante).select_related("comprador"))
     eventos.publicar(eventos.SANCION_APLICADA, sancion=sancion)
     return sancion
 

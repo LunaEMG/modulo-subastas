@@ -39,9 +39,25 @@ urlpatterns = [
         comprador.aceptar_precio_holandesa,
         name="aceptar_precio_holandesa",
     ),
+    # «Revisa y confirma» antes de las acciones que no se deshacen.
+    path(
+        "subastas/<int:subasta_id>/comprar/confirmar/",
+        comprador.confirmar_compra_inmediata,
+        name="confirmar_compra_inmediata",
+    ),
+    path(
+        "subastas/<int:subasta_id>/aceptar/confirmar/",
+        comprador.confirmar_aceptar_holandesa,
+        name="confirmar_aceptar_holandesa",
+    ),
     path("comprador/historial/", comprador.historial, name="historial"),
     # CU-14
     path("comprador/pagar/<int:adjudicacion_id>/", comprador.pagar, name="pagar"),
+    path(
+        "comprador/pagar/<int:adjudicacion_id>/confirmar/",
+        comprador.confirmar_pago,
+        name="confirmar_pago",
+    ),
     # CU-17
     path("avisos/", avisos.lista, name="avisos"),
     path("avisos/leidas/", avisos.marcar_leidas, name="marcar_leidas"),
@@ -85,8 +101,18 @@ urlpatterns = [
         moderador.retirar_publicacion,
         name="retirar_publicacion",
     ),
+    path(
+        "moderador/articulos/<int:articulo_id>/retirar/confirmar/",
+        moderador.confirmar_retiro,
+        name="confirmar_retiro",
+    ),
     path("moderador/usuarios/<int:usuario_id>/", moderador.usuario, name="moderador_usuario"),
     path("moderador/usuarios/<int:usuario_id>/sancionar/", moderador.sancionar, name="sancionar"),
+    path(
+        "moderador/usuarios/<int:usuario_id>/sancionar/confirmar/",
+        moderador.confirmar_sancion,
+        name="confirmar_sancion",
+    ),
     # La vista responde 404 sin DEBUG.
     path("desarrollo/bandeja/", general.bandeja_simulada, name="bandeja_simulada"),
 ]

@@ -2,11 +2,14 @@ from django.db.models import Q
 
 from .. import reloj
 from .. import subastas_tipos as tipos
-from ..models import Puja, Subasta
+from ..models import Adjudicacion, Articulo, Puja, Rol, Subasta
 from ..reglas import cierre as reglas_cierre
 from ..reglas import precios as reglas_precios
-from ..reglas.estados import EstadoSubasta
+from ..reglas.duracion import ESTADOS_ANALIZADOS
+from ..reglas.estados import EstadoArticulo, EstadoSubasta
+from ..reglas.pagos import EstadoAdjudicacion
 from ..reglas.pujas import INCREMENTO_MINIMO
+from . import moderacion
 
 
 def puja_mas_alta(subasta):
@@ -70,6 +73,8 @@ def resumen_subasta(subasta, usuario=None) -> dict:
         "abierta": abierta,
         "precio_actual": precio,
         "puja_minima": precio + INCREMENTO_MINIMO,
+        # S-32: con el precio en el tope ya no cabe ninguna puja mayor.
+        "puja_al_tope": precio + INCREMENTO_MINIMO > reglas_precios.PRECIO_MAXIMO,
         "numero_pujas": subasta.pujas.filter(estado=Puja.Estado.ACTIVA).count(),
         "mi_puja": mi_puja,
         "soy_lider": mi_puja is not None and mas_alta == mi_puja,
@@ -84,3 +89,40 @@ def resumen_subasta(subasta, usuario=None) -> dict:
     if subasta.tipo == "HOLANDESA" and abierta:
         resumen["proxima_bajada"] = estrategia.proxima_bajada(subasta, instante)
     return resumen
+
+
+# Pendientes por rol: lo que espera una acción de cada quien. Las bandejas usan las mismas consultas.
+ESTADOS_POR_ATENDER = frozenset({EstadoArticulo.RECHAZADO}) | ESTADOS_ANALIZADOS
+
+
+def articulos_por_atender(vendedor):
+    """Artículos del vendedor por corregir (RECHAZADO) o por proponer en subasta."""
+    return vendedor.articulos.filter(estado__in=ESTADOS_POR_ATENDER).select_related("categoria")
+
+
+def articulos_por_revisar():
+    return Articulo.objects.filter(estado=EstadoArticulo.REGISTRADO)
+
+
+def propuestas_por_validar():
+    return Subasta.objects.filter(estado=EstadoSubasta.PROPUESTA)
+
+
+def pagos_pendientes(comprador):
+    return Adjudicacion.objects.filter(ganador=comprador, estado=EstadoAdjudicacion.PENDIENTE_PAGO)
+
+
+def pendientes_por_rol(usuario) -> dict:
+    """Solo calcula los roles que tiene el usuario; los demás no aparecen en el resultado."""
+    pendientes = {}
+    if usuario.tiene_rol(Rol.VENDEDOR):
+        pendientes["vendedor"] = articulos_por_atender(usuario).count()
+    if usuario.tiene_rol(Rol.COMPRADOR):
+        pendientes["comprador"] = pagos_pendientes(usuario).count()
+    if usuario.tiene_rol(Rol.GESTOR):
+        pendientes["gestor_articulos"] = articulos_por_revisar().count()
+        pendientes["gestor_propuestas"] = propuestas_por_validar().count()
+        pendientes["gestor"] = pendientes["gestor_articulos"] + pendientes["gestor_propuestas"]
+    if usuario.tiene_rol(Rol.MODERADOR):
+        pendientes["moderador"] = len(moderacion.pendientes_de_revision())
+    return pendientes

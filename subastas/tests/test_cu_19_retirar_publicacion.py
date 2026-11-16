@@ -45,3 +45,23 @@ class CU19RetirarPublicacion(PruebaSubastas):
             "ERR-53", moderacion.retirar_publicacion,
             moderador=self.moderador, articulo_id=self.subasta.articulo_id, motivo="Tarde",
         )
+
+    def test_retirar_pasa_por_revisa_y_confirma(self):
+        """Rediseño (fase C): «Retirar publicación» muestra el motivo y cuántas pujas quedan sin efecto, sin retirar nada."""
+        articulo_id = self.subasta.articulo_id
+        self.assertContains(self.client.get(self.url), reverse("confirmar_retiro", args=[articulo_id]))
+        pantalla = self.client.post(reverse("confirmar_retiro", args=[articulo_id]), {"motivo": "Artículo robado"})
+        self.assertContains(pantalla, "Revisa y confirma")
+        self.assertContains(pantalla, "Artículo robado")
+        self.assertContains(pantalla, "Las pujas activas (1) quedan sin efecto.")
+        self.assertContains(pantalla, reverse("retirar_publicacion", args=[articulo_id]))
+        self.subasta.refresh_from_db()
+        self.assertEqual(self.subasta.estado, EstadoSubasta.ABIERTA)
+
+    def test_la_confirmacion_de_retiro_exige_el_motivo_err_49(self):
+        """Rediseño (fase C): sin motivo no se llega a la confirmación; se regresa al artículo con ERR-49."""
+        respuesta = self.client.post(
+            reverse("confirmar_retiro", args=[self.subasta.articulo_id]), {"motivo": ""}, follow=True, **self.desde(self.url)
+        )
+        self.assertContains(respuesta, "ERR-49")
+        self.assertRedirects(self.client.get(reverse("confirmar_retiro", args=[self.subasta.articulo_id])), self.url)

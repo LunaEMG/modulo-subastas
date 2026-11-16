@@ -1,7 +1,7 @@
 """CU-05 Dar seguimiento a sus artículos y subastas (Vendedor), con el resultado de la venta."""
 from django.urls import reverse
 
-from subastas.servicios import cierre, pujas
+from subastas.servicios import cierre, consultas, pujas, revision
 
 from .base import PruebaSubastas
 
@@ -33,3 +33,21 @@ class CU05Seguimiento(PruebaSubastas):
         """CA-05.3 Un vendedor no puede consultar el artículo de otro (ERR-43)."""
         self.client.force_login(self.crear_vendedor())
         self.assertContains(self.client.get(self.url, follow=True), "ERR-43")
+
+    def test_rediseno_fase_e_pendientes_del_vendedor(self):
+        """Rediseño (fase E) El menú cuenta los artículos por corregir o proponer y «Mis artículos» los lista arriba."""
+        por_proponer = self.articulo_listo()
+        rechazado = self.registrar_articulo()
+        revision.rechazar_articulo(gestor=self.gestor, articulo_id=rechazado.pk, motivo="Faltan fotos.")
+        self.assertEqual(consultas.pendientes_por_rol(self.vendedor), {"vendedor": 2})
+        respuesta = self.client.get(reverse("mis_articulos"))
+        self.assertContains(respuesta, 'class="contador por-atender">2<')
+        self.assertContains(respuesta, "Requieren tu acción")
+        self.assertContains(respuesta, reverse("proponer_subasta", args=[por_proponer.pk]))
+        self.assertContains(respuesta, reverse("corregir_articulo", args=[rechazado.pk]))
+
+    def test_rediseno_fase_e_sin_pendientes_no_hay_contador_ni_seccion(self):
+        """Rediseño (fase E) Un artículo ya en subasta no requiere acción: no hay contador ni sección."""
+        respuesta = self.client.get(reverse("mis_articulos"))
+        self.assertNotContains(respuesta, "Requieren tu acción")
+        self.assertNotContains(respuesta, "contador por-atender")

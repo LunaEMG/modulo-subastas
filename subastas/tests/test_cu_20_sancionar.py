@@ -48,3 +48,41 @@ class CU20Sancionar(PruebaSubastas):
         gestor = self.crear_gestor()
         respuesta = self.client.post(reverse("sancionar", args=[gestor.pk]), {"motivo": "X"}, follow=True, **self.desde(reverse("moderador_usuario", args=[gestor.pk])))
         self.assertContains(respuesta, "ERR-65")
+
+    def test_sancionar_pasa_por_revisa_y_confirma(self):
+        """Rediseño (fase C): la sanción muestra nivel, duración y motivo antes de aplicarse; mostrarla no sanciona."""
+        self.assertContains(self.client.get(self.url), reverse("confirmar_sancion", args=[self.infractor.pk]))
+        pantalla = self.client.post(reverse("confirmar_sancion", args=[self.infractor.pk]), {"motivo": "Spam", "nivel": "1"})
+        self.assertContains(pantalla, "Revisa y confirma")
+        self.assertContains(pantalla, "Nivel 1: suspensión de 14 días")
+        self.assertContains(pantalla, "Aplicar sanción de nivel 1")
+        self.assertContains(pantalla, reverse("sancionar", args=[self.infractor.pk]))
+        self.assertFalse(Sancion.objects.exists())
+
+    def test_la_confirmacion_de_sancion_exige_el_motivo_err_49(self):
+        """Rediseño (fase C): sin motivo no se llega a la confirmación; se regresa al usuario con ERR-49."""
+        respuesta = self.client.post(
+            reverse("confirmar_sancion", args=[self.infractor.pk]), {"motivo": " ", "nivel": "1"}, follow=True, **self.desde(self.url)
+        )
+        self.assertContains(respuesta, "ERR-49")
+        self.assertFalse(Sancion.objects.exists())
+
+    def test_review_la_confirmacion_no_se_ofrece_para_el_personal_err_65(self):
+        """Code review: la confirmación aplica la misma regla que la sanción; con el personal regresa con ERR-65."""
+        gestor = self.crear_gestor()
+        origen = reverse("moderador_usuario", args=[gestor.pk])
+        respuesta = self.client.post(
+            reverse("confirmar_sancion", args=[gestor.pk]), {"motivo": "X", "nivel": "1"}, follow=True, **self.desde(origen)
+        )
+        self.assertContains(respuesta, "ERR-65")
+        self.assertNotContains(respuesta, "Revisa y confirma")
+
+    def test_review_una_confirmacion_con_el_nivel_ya_superado_se_rechaza_err_16(self):
+        """Code review: si otro moderador sancionó antes, la confirmación de la página vieja se rechaza con ERR-16."""
+        self.client.post(reverse("sancionar", args=[self.infractor.pk]), {"motivo": "Spam", "nivel": "1"})
+        respuesta = self.client.post(
+            reverse("confirmar_sancion", args=[self.infractor.pk]), {"motivo": "Spam", "nivel": "1"}, follow=True, **self.desde(self.url)
+        )
+        self.assertContains(respuesta, "ERR-16")
+        self.assertNotContains(respuesta, "Revisa y confirma")
+        self.assertEqual(Sancion.objects.count(), 1)

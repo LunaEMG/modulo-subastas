@@ -1,7 +1,11 @@
 {% with fotos=articulo.fotografias_visibles %}
 {% if fotos %}
+{# Foto principal grande y miniaturas debajo; cada imagen abre su archivo completo (sin JavaScript). #}
 <div class="galeria">
-  {% for foto in fotos %}<a href="{{ foto.archivo.url }}" target="_blank" rel="noopener"><img src="{{ foto.archivo.url }}" alt="Fotografía {{ forloop.counter }} de {{ articulo.titulo }}"></a>{% endfor %}
+  {% with principal=fotos.0 %}<a class="galeria-principal" href="{{ principal.archivo.url }}" target="_blank" rel="noopener"><img src="{{ principal.archivo.url }}" width="800" height="600" decoding="async" alt="Fotografía 1 de {{ articulo.titulo }}"></a>{% endwith %}
+  {% if fotos|length > 1 %}<div class="galeria-miniaturas">
+    {% for foto in fotos|slice:"1:" %}<a href="{{ foto.archivo.url }}" target="_blank" rel="noopener"><img src="{{ foto.archivo.url }}" width="160" height="160" loading="lazy" decoding="async" alt="Fotografía {{ forloop.counter|add:1 }} de {{ articulo.titulo }}"></a>{% endfor %}
+  </div>{% endif %}
 </div>
 {% else %}<p class="suave">Sin fotografías.</p>{% endif %}
 {% endwith %}

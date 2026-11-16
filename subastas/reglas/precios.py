@@ -1,7 +1,8 @@
 from ..mensajes import ErrorDeNegocio
 
-# RN-04: no hay precio máximo; la constante lo deja explícito.
-PRECIO_MAXIMO = None
+# RN-04 no fija precio máximo. S-32: el tope es el mayor entero que PositiveIntegerField guarda en
+# cualquier base de datos de Django; vale para todo monto en fichas (precios, pujas, decrementos).
+PRECIO_MAXIMO = 2_147_483_647
 
 
 def precio_minimo_avalado(

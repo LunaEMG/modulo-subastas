@@ -12,11 +12,11 @@
       <p>{{ articulo.descripcion|linebreaksbr }}</p>
     </div>
     <div class="tarjeta">
-      <h2 style="margin-top: 0;">Subastas</h2>
+      <h2>Subastas</h2>
       {% for fila in subastas %}
       {% with s=fila.subasta %}
       <div class="tarjeta">
-        <p><strong>{{ fila.tipo.nombre }}</strong> · <span class="etiqueta">{{ s.get_estado_display }}</span></p>
+        <p><strong>{{ fila.tipo.nombre }}</strong> · {% include "subastas/_estado_subasta.html" with subasta=s %}</p>
         <dl class="datos">
           <dt>Duración</dt><dd>{{ s.duracion_horas }} horas</dd>
           <dt>Precio de salida</dt><dd>{{ s.precio_salida|intcomma }} fichas</dd>
@@ -49,21 +49,21 @@
         <dt>Costo de salida</dt><dd>{{ articulo.costo_salida|intcomma }} fichas</dd>
         <dt>Registrado</dt><dd>{{ articulo.fecha_registro|date:"d/m/Y H:i" }}</dd>
       </dl>
-      <div class="acciones" style="margin-top: 12px;">
+      <div class="acciones separado">
         {% if puede_corregir %}<a class="boton" href="{% url 'corregir_articulo' articulo.pk %}">Corregir y reenviar</a>{% endif %}
         {% if puede_proponer %}<a class="boton" href="{% url 'proponer_subasta' articulo.pk %}">Proponer subasta</a>{% endif %}
       </div>
     </div>
     <div class="tarjeta">
-      <h2 style="margin-top: 0;">Historial de revisiones</h2>
+      <h2>Historial de revisiones</h2>
       {% for r in articulo.revisiones_gestor.all %}
-        <p><span class="etiqueta {% if r.decision == 'APROBADO' %}bien{% else %}mal{% endif %}">{{ r.get_decision_display }}</span> {{ r.get_etapa_display }} · <span class="suave">{{ r.fecha|date:"d/m/Y H:i" }}</span>{% if r.observaciones %}<br>{{ r.observaciones }}{% endif %}</p>
+        <p><span class="sello {% if r.decision == 'APROBADO' %}sello-en-curso{% else %}sello-detenido{% endif %}">{{ r.get_decision_display }}</span> {{ r.get_etapa_display }} · <span class="suave">{{ r.fecha|date:"d/m/Y H:i" }}</span>{% if r.observaciones %}<br>{{ r.observaciones }}{% endif %}</p>
       {% endfor %}
       {% for r in articulo.revisiones_contenido.all %}
-        <p><span class="etiqueta {% if r.decision == 'APROBADO' %}bien{% else %}mal{% endif %}">{{ r.get_decision_display }}</span> Moderación de contenido · <span class="suave">{{ r.fecha|date:"d/m/Y H:i" }}</span>{% if r.motivo %}<br>{{ r.motivo }}{% endif %}</p>
+        <p><span class="sello {% if r.decision == 'APROBADO' %}sello-en-curso{% else %}sello-detenido{% endif %}">{{ r.get_decision_display }}</span> Moderación de contenido · <span class="suave">{{ r.fecha|date:"d/m/Y H:i" }}</span>{% if r.motivo %}<br>{{ r.motivo }}{% endif %}</p>
       {% endfor %}
       {% for v in articulo.valuaciones.all %}
-        <p><span class="etiqueta {% if v.precio_avalado %}bien{% else %}mal{% endif %}">Valuación</span> {% if v.precio_avalado %}Avaló {{ v.precio_avalado|intcomma }} fichas{% else %}No avalado{% endif %} · <span class="suave">{{ v.referencia_externa }}</span></p>
+        <p><span class="sello {% if v.precio_avalado %}sello-en-curso{% else %}sello-detenido{% endif %}">Valuación</span> {% if v.precio_avalado %}Avaló {{ v.precio_avalado|intcomma }} fichas{% else %}No avalado{% endif %} · <span class="suave">{{ v.referencia_externa }}</span></p>
       {% endfor %}
       {% if not articulo.revisiones_gestor.exists and not articulo.valuaciones.exists and not articulo.revisiones_contenido.exists %}<p class="suave">Sin revisiones todavía.</p>{% endif %}
     </div>

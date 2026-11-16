@@ -1,0 +1,30 @@
+{% extends "subastas/base.html" %}
+{% load humanize %}
+{% block titulo %}Revisa y confirma · Casa de Subastas{% endblock %}
+{% block contenido %}
+<p><a href="{{ volver_url }}">← {{ volver_texto }}</a></p>
+<div class="tarjeta estrecho confirmacion">
+  <h1>Revisa y confirma</h1>
+  <p><strong>{{ asunto }}</strong></p>
+  {% if monto is not None %}
+  <p class="suave sin-margen">{{ monto_etiqueta }}</p>
+  <p class="precio">{{ monto|intcomma }} <span class="unidad">fichas</span></p>
+  {% endif %}
+  {% if datos %}
+  <dl class="datos">
+    {% for etiqueta, valor in datos %}<dt>{{ etiqueta }}</dt><dd>{{ valor }}</dd>{% endfor %}
+  </dl>
+  {% endif %}
+  <h2>Qué va a pasar</h2>
+  <ul class="consecuencias">
+    {% for consecuencia in consecuencias %}<li>{{ consecuencia }}</li>{% endfor %}
+  </ul>
+  <form method="post" action="{{ accion_url }}">{% csrf_token %}
+    {% for nombre, valor in ocultos %}<input type="hidden" name="{{ nombre }}" value="{{ valor }}">{% endfor %}
+    <div class="acciones">
+      <button class="boton{% if peligro %} peligro{% endif %}" type="submit">{{ boton_texto }}</button>
+      <a class="boton secundario" href="{{ volver_url }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

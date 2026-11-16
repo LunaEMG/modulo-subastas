@@ -8,7 +8,7 @@
 <div class="tarjeta">
   <p><span class="etiqueta">{{ envio.canal }}</span> para <strong>{{ envio.destino }}</strong>
     <span class="suave">· {{ envio.fecha }}</span></p>
-  <h3>{{ envio.asunto }}</h3>
+  <h2 class="titulo-tarjeta">{{ envio.asunto }}</h2>
   <pre class="envio">{{ envio.cuerpo }}</pre>
 </div>
 {% empty %}

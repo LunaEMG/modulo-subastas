@@ -3,43 +3,62 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1c1917">
   <title>{% block titulo %}Casa de Subastas{% endblock %}</title>
+  <link rel="icon" href="{% static 'subastas/favicon.svg' %}" type="image/svg+xml">
+  <link rel="preload" href="{% static 'subastas/fuentes/public-sans-latin-400-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'subastas/fuentes/newsreader-latin-600-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'subastas/estilos.css' %}">
 </head>
 <body>
+<a class="saltar" href="#contenido">Saltar al contenido</a>
 <header class="encabezado">
   <div class="contenedor">
     <a class="marca" href="{% url 'inicio' %}">Casa de Subastas</a>
     <nav class="menu" aria-label="Principal">
       {% if user.is_authenticated %}
-        <a href="{% url 'buscar_subastas' %}">Subastas</a>
-        {% if es_comprador %}<a href="{% url 'historial' %}">Mi historial</a>{% endif %}
-        {% if es_vendedor %}<a href="{% url 'mis_articulos' %}">Mis artículos</a>{% endif %}
-        {% if es_gestor %}<a href="{% url 'gestor_bandeja' %}">Pendientes del gestor</a>{% endif %}
-        {% if es_moderador %}<a href="{% url 'moderador_bandeja' %}">Moderación</a>{% endif %}
-        <a href="{% url 'avisos' %}">Avisos{% if avisos_sin_leer %} <span class="contador">{{ avisos_sin_leer }}</span>{% endif %}</a>
-        <form method="post" action="{% url 'salir' %}">{% csrf_token %}
-          <button type="submit">Salir ({{ user.nombre }})</button>
-        </form>
+        <a href="{% url 'buscar_subastas' %}"{% if actual.subastas %} aria-current="{{ actual.subastas }}"{% endif %}>Subastas</a>
+        {% if es_comprador %}<a href="{% url 'historial' %}"{% if actual.historial %} aria-current="{{ actual.historial }}"{% endif %}>Mi historial{% if pendientes_rol.comprador %} <span class="contador por-atender">{{ pendientes_rol.comprador }}<span class="solo-lector"> pendientes</span></span>{% endif %}</a>{% endif %}
+        {% if es_vendedor %}<a href="{% url 'mis_articulos' %}"{% if actual.articulos %} aria-current="{{ actual.articulos }}"{% endif %}>Mis artículos{% if pendientes_rol.vendedor %} <span class="contador por-atender">{{ pendientes_rol.vendedor }}<span class="solo-lector"> pendientes</span></span>{% endif %}</a>{% endif %}
+        {% if es_gestor %}<a href="{% url 'gestor_bandeja' %}"{% if actual.gestor %} aria-current="{{ actual.gestor }}"{% endif %}>Pendientes del gestor{% if pendientes_rol.gestor %} <span class="contador por-atender">{{ pendientes_rol.gestor }}<span class="solo-lector"> pendientes</span></span>{% endif %}</a>{% endif %}
+        {% if es_moderador %}<a href="{% url 'moderador_bandeja' %}"{% if actual.moderacion %} aria-current="{{ actual.moderacion }}"{% endif %}>Moderación{% if pendientes_rol.moderador %} <span class="contador por-atender">{{ pendientes_rol.moderador }}<span class="solo-lector"> pendientes</span></span>{% endif %}</a>{% endif %}
+        <a href="{% url 'avisos' %}"{% if actual.avisos %} aria-current="{{ actual.avisos }}"{% endif %}>Avisos{% if avisos_sin_leer %} <span class="contador">{{ avisos_sin_leer }}</span>{% endif %}</a>
       {% else %}
-        <a href="{% url 'entrar' %}">Entrar</a>
-        <a href="{% url 'registro' %}">Registrarse</a>
+        <a href="{% url 'entrar' %}"{% if actual.entrar %} aria-current="{{ actual.entrar }}"{% endif %}>Entrar</a>
+        <a href="{% url 'registro' %}"{% if actual.registro %} aria-current="{{ actual.registro }}"{% endif %}>Registrarse</a>
       {% endif %}
-      {% if modo_desarrollo %}<a href="{% url 'bandeja_simulada' %}">Bandeja simulada</a>{% endif %}
     </nav>
+    {% if user.is_authenticated %}
+    <form class="salir" method="post" action="{% url 'salir' %}">{% csrf_token %}
+      <button type="submit">Salir<span class="salir-nombre"> ({{ user.nombre }})</span></button>
+    </form>
+    {% endif %}
   </div>
 </header>
-<main class="contenedor">
+<main class="contenedor" id="contenido" tabindex="-1">
   {% if messages %}
-  <ul class="mensajes" role="status">
-    {% for mensaje in messages %}
+  {# Los errores se anuncian de inmediato (alert); las confirmaciones, sin interrumpir (status). #}
+  <ul class="mensajes" role="alert">
+    {% for mensaje in messages %}{% if mensaje.level_tag == "error" %}
     <li class="mensaje {{ mensaje.level_tag }}">
       <span class="codigo-mensaje">{{ mensaje.extra_tags }}</span>{{ mensaje.message }}
     </li>
-    {% endfor %}
+    {% endif %}{% endfor %}
+  </ul>
+  <ul class="mensajes" role="status">
+    {% for mensaje in messages %}{% if mensaje.level_tag != "error" %}
+    <li class="mensaje {{ mensaje.level_tag }}">
+      <span class="codigo-mensaje">{{ mensaje.extra_tags }}</span>{{ mensaje.message }}
+    </li>
+    {% endif %}{% endfor %}
   </ul>
   {% endif %}
   {% block contenido %}{% endblock %}
 </main>
+{% if modo_desarrollo %}
+<footer class="pie contenedor">
+  <nav aria-label="Desarrollo"><a href="{% url 'bandeja_simulada' %}"{% if actual.bandeja %} aria-current="{{ actual.bandeja }}"{% endif %}>Bandeja simulada</a></nav>
+</footer>
+{% endif %}
 </body>
 </html>

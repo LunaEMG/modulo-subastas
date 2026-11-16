@@ -2,21 +2,42 @@
 {% load humanize %}
 {% block titulo %}Mis artículos · Casa de Subastas{% endblock %}
 {% block contenido %}
-<div class="acciones" style="justify-content: space-between; margin-bottom: 12px;">
-  <h1 style="margin: 0;">Mis artículos</h1>
+<div class="acciones cabecera-pagina">
+  <h1>Mis artículos</h1>
   <a class="boton" href="{% url 'registrar_articulo' %}">Registrar artículo</a>
 </div>
+{% if por_atender %}
+<section class="tarjeta por-atender-lista" aria-labelledby="titulo-por-atender">
+  <h2 id="titulo-por-atender">Requieren tu acción</h2>
+  <ul>
+    {% for articulo in por_atender %}
+    <li>
+      <div class="por-atender-dato">
+        <a href="{% url 'detalle_articulo' articulo.pk %}">{{ articulo.titulo }}</a>
+        {% include "subastas/_estado_articulo.html" %}
+      </div>
+      {% if articulo.estado == "RECHAZADO" %}
+      <a class="boton secundario" href="{% url 'corregir_articulo' articulo.pk %}">Corregir y reenviar</a>
+      {% else %}
+      <a class="boton secundario" href="{% url 'proponer_subasta' articulo.pk %}">Proponer subasta</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
 {% if articulos %}
 <div class="tarjeta tabla-caja">
-  <table>
+  <table class="apilada">
     <thead><tr><th>Artículo</th><th>Categoría</th><th class="numero">Costo de salida</th><th>Estado</th></tr></thead>
     <tbody>
     {% for articulo in articulos %}
       <tr>
-        <td><a href="{% url 'detalle_articulo' articulo.pk %}">{{ articulo.titulo }}</a><br><span class="suave">#{{ articulo.pk }} · {{ articulo.anio }}</span></td>
-        <td>{{ articulo.categoria }}</td>
-        <td class="numero">{{ articulo.costo_salida|intcomma }} fichas</td>
-        <td>{% include "subastas/_estado_articulo.html" %}</td>
+        <td class="celda-principal"><a href="{% url 'detalle_articulo' articulo.pk %}">{{ articulo.titulo }}</a><br><span class="suave">#{{ articulo.pk }} · {{ articulo.anio }}</span>
+          <div class="solo-movil">{% include "subastas/_estado_articulo.html" %}</div></td>
+        <td data-etiqueta="Categoría">{{ articulo.categoria }}</td>
+        <td class="numero" data-etiqueta="Costo de salida">{{ articulo.costo_salida|intcomma }} fichas</td>
+        <td class="col-estado">{% include "subastas/_estado_articulo.html" %}</td>
       </tr>
     {% endfor %}
     </tbody>

@@ -39,6 +39,10 @@ class CU18RevisarContenido(PruebaSubastas):
         self.client.force_login(self.moderador)
         self.url = reverse("moderador_articulo", args=[self.articulo.pk])
 
+    def test_rediseno_movil_el_correo_del_participante_no_se_parte(self):
+        """Rediseño (móvil) En la tabla apilada el correo va completo bajo su etiqueta, no partido a media palabra."""
+        self.assertContains(self.client.get(reverse("moderador_bandeja")), '<td class="celda-ancha" data-etiqueta="Correo">')
+
     def test_ca_18_1_el_contenido_pendiente_aparece_y_se_aprueba(self):
         """CA-18.1 El artículo sin aprobar aparece en «Moderación» y al aprobarlo sale de la lista (MSG-18)."""
         self.assertContains(self.client.get(reverse("moderador_bandeja")), "Reloj de prueba")

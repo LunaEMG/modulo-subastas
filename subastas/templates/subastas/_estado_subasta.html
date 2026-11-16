@@ -1,0 +1,1 @@
+{% with e=subasta.estado %}<span class="sello {% if e == 'ABIERTA' %}sello-en-curso{% elif e == 'CERRADA_CON_GANADOR' or e == 'DESIERTA' %}sello-definitivo{% elif e == 'RECHAZADA' or e == 'CANCELADA' %}sello-detenido{% else %}sello-pendiente{% endif %}">{{ subasta.get_estado_display }}</span>{% endwith %}

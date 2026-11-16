@@ -6,7 +6,7 @@ from .. import subastas_tipos as tipos
 from ..forms.articulos import FormularioMotivo
 from ..models import Articulo, Rol, Subasta
 from ..reglas.estados import EstadoArticulo, EstadoSubasta
-from ..servicios import moderacion, revision
+from ..servicios import consultas, moderacion, revision
 from .comunes import avisar, requiere_rol
 
 
@@ -16,12 +16,8 @@ def bandeja(request):
         request,
         "subastas/gestor_bandeja.html",
         {
-            "articulos": Articulo.objects.filter(estado=EstadoArticulo.REGISTRADO).select_related(
-                "categoria", "vendedor"
-            ),
-            "propuestas": Subasta.objects.filter(estado=EstadoSubasta.PROPUESTA).select_related(
-                "articulo__vendedor"
-            ),
+            "articulos": consultas.articulos_por_revisar().select_related("categoria", "vendedor"),
+            "propuestas": consultas.propuestas_por_validar().select_related("articulo__vendedor"),
         },
     )
 

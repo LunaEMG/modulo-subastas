@@ -6,15 +6,15 @@
 <h2>Artículos por revisar (CU-06)</h2>
 {% if articulos %}
 <div class="tarjeta tabla-caja">
-  <table>
+  <table class="apilada">
     <thead><tr><th>Artículo</th><th>Vendedor</th><th>Categoría</th><th class="numero">Costo de salida</th></tr></thead>
     <tbody>
     {% for articulo in articulos %}
       <tr>
-        <td><a href="{% url 'gestor_articulo' articulo.pk %}">{{ articulo.titulo }}</a><br><span class="suave">#{{ articulo.pk }} · {{ articulo.fecha_registro|date:"d/m/Y H:i" }}</span></td>
-        <td>{{ articulo.vendedor }}</td>
-        <td>{{ articulo.categoria }}{% if articulo.categoria.requiere_valuacion %} <span class="suave">(pasa al valuador)</span>{% endif %}</td>
-        <td class="numero">{{ articulo.costo_salida|intcomma }}</td>
+        <td class="celda-principal"><a href="{% url 'gestor_articulo' articulo.pk %}">{{ articulo.titulo }}</a><br><span class="suave">#{{ articulo.pk }} · {{ articulo.fecha_registro|date:"d/m/Y H:i" }}</span></td>
+        <td data-etiqueta="Vendedor">{{ articulo.vendedor }}</td>
+        <td data-etiqueta="Categoría">{{ articulo.categoria }}{% if articulo.categoria.requiere_valuacion %} <span class="suave">(pasa al valuador)</span>{% endif %}</td>
+        <td class="numero" data-etiqueta="Costo de salida">{{ articulo.costo_salida|intcomma }}</td>
       </tr>
     {% endfor %}
     </tbody>
@@ -25,15 +25,15 @@
 <h2>Propuestas de subasta por validar (CU-07)</h2>
 {% if propuestas %}
 <div class="tarjeta tabla-caja">
-  <table>
+  <table class="apilada">
     <thead><tr><th>Artículo</th><th>Tipo</th><th class="numero">Duración</th><th class="numero">Precio de salida</th></tr></thead>
     <tbody>
     {% for subasta in propuestas %}
       <tr>
-        <td><a href="{% url 'gestor_propuesta' subasta.pk %}">{{ subasta.articulo.titulo }}</a><br><span class="suave">{{ subasta.articulo.vendedor }}</span></td>
-        <td>{{ subasta.get_tipo_display }}</td>
-        <td class="numero">{{ subasta.duracion_horas }} h</td>
-        <td class="numero">{{ subasta.precio_salida|intcomma }}</td>
+        <td class="celda-principal"><a href="{% url 'gestor_propuesta' subasta.pk %}">{{ subasta.articulo.titulo }}</a><br><span class="suave">{{ subasta.articulo.vendedor }}</span></td>
+        <td data-etiqueta="Tipo">{{ subasta.get_tipo_display }}</td>
+        <td class="numero" data-etiqueta="Duración">{{ subasta.duracion_horas }} h</td>
+        <td class="numero" data-etiqueta="Precio de salida">{{ subasta.precio_salida|intcomma }}</td>
       </tr>
     {% endfor %}
     </tbody>

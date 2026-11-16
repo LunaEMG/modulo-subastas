@@ -12,13 +12,13 @@
 {% if resultados %}
 <div class="rejilla">
   {% for r in resultados %}
-  <a class="tarjeta tarjeta-enlace" href="{% url 'detalle_subasta' r.subasta.pk %}">
-    {% with foto=r.articulo.portada %}{% if foto %}<img class="foto-portada" src="{{ foto.archivo.url }}" alt="">{% else %}<div class="foto-portada"></div>{% endif %}{% endwith %}
-    <h3>{{ r.articulo.titulo }}</h3>
-    <span><span class="etiqueta">{{ r.tipo.nombre }}</span> <span class="suave">{{ r.articulo.categoria }}</span></span>
-    <span class="precio">{{ r.precio_actual|intcomma }} fichas</span>
-    <span class="suave">{{ r.numero_pujas }} puja{{ r.numero_pujas|pluralize }} · cierra {{ r.subasta.fecha_cierre|date:"d/m/Y H:i" }}</span>
-    {% if r.mi_puja %}<span class="etiqueta {% if r.soy_lider %}bien{% else %}pendiente{% endif %}">{% if r.soy_lider %}Vas ganando{% else %}Te superaron{% endif %}</span>{% endif %}
+  <a class="tarjeta tarjeta-enlace" href="{% url 'detalle_subasta' r.subasta.pk %}" title="{{ r.articulo.titulo }}">
+    {% with foto=r.articulo.portada %}{% if foto %}<img class="foto-portada" src="{{ foto.archivo.url }}" alt="" width="400" height="300" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">{% else %}<div class="foto-portada foto-ausente"><span>Sin fotografías</span></div>{% endif %}{% endwith %}
+    <h2 class="titulo-tarjeta">{{ r.articulo.titulo }}</h2>
+    <span class="tipo-categoria"><span class="etiqueta">{{ r.tipo.nombre }}</span> <span class="suave">{{ r.articulo.categoria }}</span></span>
+    <span class="precio">{{ r.precio_actual|intcomma }} <span class="unidad">ficha{{ r.precio_actual|pluralize }}</span></span>
+    <span class="suave">{{ r.numero_pujas|intcomma }} puja{{ r.numero_pujas|pluralize }} · cierra {{ r.subasta.fecha_cierre|date:"d/m/Y H:i" }}</span>
+    {% if r.mi_puja %}<span class="sello {% if r.soy_lider %}sello-ganando{% else %}sello-superado{% endif %}">{% if r.soy_lider %}Vas ganando{% else %}Te superaron{% endif %}</span>{% endif %}
   </a>
   {% endfor %}
 </div>

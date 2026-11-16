@@ -70,3 +70,27 @@ class CargarDatosDePrueba(TestCase):
         articulos = Articulo.objects.count()
         self.assertIn("ya existían", self._cargar())
         self.assertEqual((Articulo.objects.count(), Usuario.objects.count()), (articulos, 5))
+
+    def test_las_fotografias_son_ilustraciones_generadas_localmente(self):
+        """Cada artículo de demostración trae un dibujo, no un bloque de un solo color."""
+        from PIL import Image
+
+        from subastas.models import Fotografia
+
+        self._cargar()
+        for foto in Fotografia.objects.all():
+            with foto.archivo.open("rb") as archivo:
+                imagen = Image.open(archivo)
+                self.assertEqual(imagen.size, (640, 480))
+                self.assertGreater(len(imagen.convert("RGB").getcolors(maxcolors=1 << 16) or [0] * 99), 4)
+
+    def test_redibujar_no_crea_ni_borra_registros(self):
+        """--redibujar sobrescribe los archivos de las fotos existentes y deja la base igual (RNF-01)."""
+        from subastas.models import Fotografia
+
+        self._cargar()
+        antes = list(Fotografia.objects.values_list("pk", "archivo"))
+        salida = self._cargar("--redibujar")
+        self.assertIn(f"Fotografías redibujadas: {len(antes)}", salida)
+        self.assertEqual(list(Fotografia.objects.values_list("pk", "archivo")), antes)
+

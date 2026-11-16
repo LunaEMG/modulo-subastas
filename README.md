@@ -78,6 +78,8 @@ Todos usan la contraseña `Subastas2026`.
 
 Las subastas abiertas duran 72 horas desde que se carga el comando. Para ver cierres y resubastas sin esperar, usa `adelantar_reloj` (ver «Herramientas de demostración»). El comando no duplica nada si se ejecuta otra vez; con `--solo-usuarios` crea solo las cuentas.
 
+La foto de cada artículo es una ilustración dibujada en el momento con Pillow, sin descargar nada. Si cargaste los datos con una versión anterior (bloques de color), `cargar_datos_prueba --redibujar` reemplaza esos archivos sin tocar la base de datos. Las tipografías (Newsreader y Public Sans, licencia OFL) se sirven desde `subastas/static/subastas/fuentes/`, así que la demostración funciona sin internet.
+
 El inicio de sesión pide un código de 6 dígitos que «llega al móvil». Como el envío real lo hará otro equipo, en modo de desarrollo el código aparece en la **Bandeja simulada** (enlace en el menú superior) y también en la consola donde corre el servidor. Ahí mismo aparecen los correos que envía el Servicio de Notificaciones.
 
 ## Pruebas
@@ -171,14 +173,14 @@ Comunes a todos los casos: `ERR-32` (el rol no permite la acción), `ERR-33`/`ER
 |---|---|---|
 | CU-01 Registrarse | ERR-15, ERR-35, ERR-51, ERR-54 | MSG-01 |
 | CU-02 Iniciar sesión | ERR-30, ERR-31 | MSG-02, MSG-03, MSG-04 |
-| CU-03 Registrar artículo (y corregirlo) | ERR-01, ERR-02, ERR-13, ERR-15, ERR-43, ERR-50, ERR-52 | MSG-05, MSG-06 |
-| CU-04 Proponer subasta | ERR-03, ERR-05, ERR-13, ERR-40, ERR-42, ERR-43 | MSG-07 |
+| CU-03 Registrar artículo (y corregirlo) | ERR-01, ERR-02, ERR-13, ERR-15, ERR-43, ERR-50, ERR-52, ERR-66 | MSG-05, MSG-06 |
+| CU-04 Proponer subasta | ERR-03, ERR-05, ERR-13, ERR-40, ERR-42, ERR-43, ERR-66 | MSG-07 |
 | CU-05 Seguimiento del vendedor | ERR-43 | Muestra MSG-30 a MSG-35, MSG-38, MSG-39, MSG-41, MSG-43 a MSG-45 |
 | CU-06 Revisar artículo | ERR-03, ERR-04, ERR-49 | MSG-08, MSG-09; avisos MSG-30 a MSG-33 |
 | CU-07 Validar duración y publicar | ERR-03, ERR-05, ERR-48, ERR-49 | MSG-10, MSG-11; avisos MSG-34, MSG-35 |
 | CU-08 Buscar subastas | — | — |
-| CU-09 Pujar (y aceptar precio holandés) | ERR-06, ERR-13, ERR-15, ERR-36, ERR-38, ERR-39, ERR-41 | MSG-12, MSG-15; aviso MSG-36 |
-| CU-10 Modificar puja | ERR-08, ERR-13, ERR-36, ERR-37 | MSG-13; aviso MSG-36 |
+| CU-09 Pujar (y aceptar precio holandés) | ERR-06, ERR-13, ERR-15, ERR-36, ERR-38, ERR-39, ERR-41, ERR-66 | MSG-12, MSG-15; aviso MSG-36 |
+| CU-10 Modificar puja | ERR-08, ERR-13, ERR-36, ERR-37, ERR-66 | MSG-13; aviso MSG-36 |
 | CU-11 Retirar puja | ERR-07, ERR-37 | MSG-14 |
 | CU-12 Comprar de inmediato | ERR-36, ERR-39, ERR-41 | MSG-15 |
 | CU-13 Historial del comprador | — | — |

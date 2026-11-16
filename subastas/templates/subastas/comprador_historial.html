@@ -6,16 +6,16 @@
 <h2>Subastas ganadas</h2>
 {% if ganadas %}
 <div class="tarjeta tabla-caja">
-  <table>
+  <table class="apilada">
     <thead><tr><th>Artículo</th><th class="numero">Precio final</th><th>Pago</th><th></th></tr></thead>
     <tbody>
     {% for a in ganadas %}
       <tr>
-        <td><a href="{% url 'detalle_subasta' a.subasta.pk %}">{{ a.subasta.articulo.titulo }}</a></td>
-        <td class="numero">{{ a.precio_final|intcomma }}</td>
-        <td>{{ a.get_estado_display }}{% if a.estado == 'PENDIENTE_PAGO' %}<br><span class="suave">límite {{ a.fecha_limite_pago|date:"d/m/Y H:i" }}</span>{% endif %}</td>
-        <td>{% if a.estado == 'PENDIENTE_PAGO' %}
-          <form method="post" action="{% url 'pagar' a.pk %}">{% csrf_token %}<button class="boton" type="submit">Pagar {{ a.precio_final|intcomma }} fichas</button></form>
+        <td class="celda-principal"><a href="{% url 'detalle_subasta' a.subasta.pk %}">{{ a.subasta.articulo.titulo }}</a></td>
+        <td class="numero" data-etiqueta="Precio final">{{ a.precio_final|intcomma }}</td>
+        <td data-etiqueta="Pago">{{ a.get_estado_display }}{% if a.estado == 'PENDIENTE_PAGO' %}<br><span class="suave">límite {{ a.fecha_limite_pago|date:"d/m/Y H:i" }}</span>{% endif %}</td>
+        <td class="celda-accion">{% if a.estado == 'PENDIENTE_PAGO' %}
+          <a class="boton" href="{% url 'confirmar_pago' a.pk %}">Pagar {{ a.precio_final|intcomma }} fichas</a>
           {% elif a.estado == 'PAGADA' %}<span class="suave">Envío {{ a.referencia_envio }}</span>{% endif %}</td>
       </tr>
     {% endfor %}
@@ -30,16 +30,17 @@
 <div class="tarjeta">
   <p><a href="{% url 'detalle_subasta' p.subasta.pk %}"><strong>{{ p.subasta.articulo.titulo }}</strong></a>
     <span class="etiqueta">{{ fila.tipo.nombre }}</span>
-    <span class="etiqueta {% if p.estado == 'ACTIVA' %}bien{% else %}mal{% endif %}">{{ p.get_estado_display }}</span>
-    {% if fila.abierta %}<span class="suave">· precio actual {{ fila.precio_actual|intcomma }}</span>{% else %}<span class="suave">· subasta cerrada</span>{% endif %}</p>
+    <span class="sello {% if p.estado != 'ACTIVA' %}sello-detenido{% elif fila.abierta %}sello-en-curso{% else %}sello-definitivo{% endif %}">{{ p.get_estado_display }}</span>
+    {% if p.estado == 'ACTIVA' and fila.abierta %}{% if fila.soy_lider %}<span class="sello sello-ganando">Vas ganando</span>{% else %}<span class="sello sello-superado">Te superaron</span>{% endif %}{% endif %}
+    {% if fila.abierta %}<span class="suave sin-cortar">· precio actual {{ fila.precio_actual|intcomma }}</span>{% else %}<span class="suave sin-cortar">· subasta cerrada</span>{% endif %}</p>
   <div class="tabla-caja">
-    <table>
+    <table class="apilada">
       <thead><tr><th>Fecha</th><th>Movimiento</th><th class="numero">Antes</th><th class="numero">Después</th></tr></thead>
       <tbody>
       {% for m in p.movimientos.all %}
-        <tr><td>{{ m.fecha|date:"d/m/Y H:i" }}</td><td>{{ m.get_tipo_display }}</td>
-          <td class="numero">{{ m.monto_anterior|default_if_none:"—"|intcomma }}</td>
-          <td class="numero">{{ m.monto_nuevo|default_if_none:"—"|intcomma }}</td></tr>
+        <tr><td class="celda-principal">{{ m.fecha|date:"d/m/Y H:i" }}</td><td data-etiqueta="Movimiento">{{ m.get_tipo_display }}</td>
+          <td class="numero" data-etiqueta="Antes">{{ m.monto_anterior|default_if_none:"—"|intcomma }}</td>
+          <td class="numero" data-etiqueta="Después">{{ m.monto_nuevo|default_if_none:"—"|intcomma }}</td></tr>
       {% endfor %}
       </tbody>
     </table>

@@ -44,3 +44,41 @@ class CU04ProponerSubasta(PruebaSubastas):
     def test_ca_04_5_un_articulo_sin_analizar_no_admite_propuesta_err_05(self):
         """CA-04.5 Un artículo que aún no pasa la revisión ni la valuación no admite propuesta (ERR-05, RN-05)."""
         self.assertErrorDeNegocio("ERR-05", self.proponer, self.registrar_articulo())
+
+    def test_paso_1_solo_pide_elegir_el_tipo(self):
+        """Rediseño (fase D): sin tipo elegido, la pantalla muestra los cuatro tipos con su descripción y ningún campo."""
+        pantalla = self.client.get(reverse("proponer_subasta", args=[self.articulo.pk]))
+        self.assertContains(pantalla, "Paso 1 de 2")
+        self.assertContains(pantalla, 'type="radio" name="tipo"', count=4)
+        self.assertNotContains(pantalla, 'name="duracion_horas"')
+
+    def test_paso_2_muestra_solo_los_campos_del_tipo(self):
+        """Rediseño (fase D): con el tipo elegido, solo aparecen la duración y los parámetros de ese tipo."""
+        parametros = {
+            "INGLESA": set(),
+            "RESERVADA": {"precio_reserva"},
+            "COMPRA_INMEDIATA": {"precio_compra_inmediata"},
+            "HOLANDESA": {"holandesa_precio_inicial", "holandesa_decremento", "holandesa_intervalo_min"},
+        }
+        todos = set().union(*parametros.values())
+        url = reverse("proponer_subasta", args=[self.articulo.pk])
+        for tipo, propios in parametros.items():
+            with self.subTest(tipo=tipo):
+                pantalla = self.client.get(url, {"tipo": tipo})
+                self.assertContains(pantalla, "Paso 2 de 2")
+                self.assertContains(pantalla, 'name="duracion_horas"')
+                self.assertContains(pantalla, f'type="hidden" name="tipo" value="{tipo}"')
+                for campo in todos:
+                    if campo in propios:
+                        self.assertContains(pantalla, f'name="{campo}"')
+                    else:
+                        self.assertNotContains(pantalla, f'name="{campo}"')
+
+    def test_un_error_regresa_al_paso_2_del_mismo_tipo(self):
+        """Rediseño (fase D): si el servicio rechaza la propuesta, se vuelve a pintar el paso 2 del tipo enviado."""
+        url = reverse("proponer_subasta", args=[self.articulo.pk])
+        respuesta = self.client.post(url, {"tipo": "RESERVADA", "duracion_horas": "48"})
+        self.assertContains(respuesta, "ERR-42")
+        self.assertContains(respuesta, 'name="precio_reserva"')
+        self.assertNotContains(respuesta, 'name="holandesa_decremento"')
+        self.assertFalse(Subasta.objects.exists())

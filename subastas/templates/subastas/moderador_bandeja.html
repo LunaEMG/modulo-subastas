@@ -7,14 +7,15 @@
 <p class="suave">El gestor no puede publicar una subasta hasta que apruebes su descripción y fotografías.</p>
 {% if pendientes %}
 <div class="tarjeta tabla-caja">
-  <table>
+  <table class="apilada">
     <thead><tr><th>Artículo</th><th>Vendedor</th><th>Estado</th></tr></thead>
     <tbody>
     {% for articulo in pendientes %}
       <tr>
-        <td><a href="{% url 'moderador_articulo' articulo.pk %}">{{ articulo.titulo }}</a><br><span class="suave">#{{ articulo.pk }} · {{ articulo.categoria }}</span></td>
-        <td>{{ articulo.vendedor }}</td>
-        <td>{% include "subastas/_estado_articulo.html" %}</td>
+        <td class="celda-principal"><a href="{% url 'moderador_articulo' articulo.pk %}">{{ articulo.titulo }}</a><br><span class="suave">#{{ articulo.pk }} · {{ articulo.categoria }}</span>
+          <div class="solo-movil">{% include "subastas/_estado_articulo.html" %}</div></td>
+        <td data-etiqueta="Vendedor">{{ articulo.vendedor }}</td>
+        <td class="col-estado">{% include "subastas/_estado_articulo.html" %}</td>
       </tr>
     {% endfor %}
     </tbody>
@@ -25,14 +26,14 @@
 <h2>Publicaciones activas (CU-19)</h2>
 {% if publicadas %}
 <div class="tarjeta tabla-caja">
-  <table>
+  <table class="apilada">
     <thead><tr><th>Artículo</th><th>Tipo</th><th>Cierra</th></tr></thead>
     <tbody>
     {% for subasta in publicadas %}
       <tr>
-        <td><a href="{% url 'moderador_articulo' subasta.articulo_id %}">{{ subasta.articulo.titulo }}</a></td>
-        <td>{{ subasta.get_tipo_display }}</td>
-        <td>{{ subasta.fecha_cierre|date:"d/m/Y H:i" }}</td>
+        <td class="celda-principal"><a href="{% url 'moderador_articulo' subasta.articulo_id %}">{{ subasta.articulo.titulo }}</a></td>
+        <td data-etiqueta="Tipo">{{ subasta.get_tipo_display }}</td>
+        <td data-etiqueta="Cierra">{{ subasta.fecha_cierre|date:"d/m/Y H:i" }}</td>
       </tr>
     {% endfor %}
     </tbody>
@@ -43,14 +44,15 @@
 <h2>Participantes (CU-20)</h2>
 {% if participantes %}
 <div class="tarjeta tabla-caja">
-  <table>
+  <table class="apilada">
     <thead><tr><th>Nombre</th><th>Correo</th><th>Cuenta</th></tr></thead>
     <tbody>
     {% for fila in participantes %}
       <tr>
-        <td><a href="{% url 'moderador_usuario' fila.usuario.pk %}">{{ fila.usuario.nombre }}</a></td>
-        <td>{{ fila.usuario.correo }}</td>
-        <td><span class="etiqueta {% if fila.estado == 'Activa' %}bien{% else %}mal{% endif %}">{{ fila.estado }}</span></td>
+        <td class="celda-principal"><a href="{% url 'moderador_usuario' fila.usuario.pk %}">{{ fila.usuario.nombre }}</a>
+          <div class="solo-movil"><span class="sello {% if fila.estado == 'Activa' %}sello-en-curso{% else %}sello-detenido{% endif %}">{{ fila.estado }}</span></div></td>
+        <td class="celda-ancha" data-etiqueta="Correo">{{ fila.usuario.correo }}</td>
+        <td class="col-estado"><span class="sello {% if fila.estado == 'Activa' %}sello-en-curso{% else %}sello-detenido{% endif %}">{{ fila.estado }}</span></td>
       </tr>
     {% endfor %}
     </tbody>

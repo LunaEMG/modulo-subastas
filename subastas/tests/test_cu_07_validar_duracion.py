@@ -48,3 +48,11 @@ class CU07ValidarDuracion(PruebaSubastas):
         self.client.post(reverse("validar_duracion", args=[self.subasta.pk]))
         respuesta = self.client.post(reverse("validar_duracion", args=[self.subasta.pk]), follow=True, **self.desde(self.url))
         self.assertContains(respuesta, "ERR-03")
+
+    def test_sin_aprobacion_no_se_ofrece_validar_y_se_explica_lo_que_falta(self):
+        """Rediseño (fase C): sin la aprobación del moderador no aparece «Validar y publicar»; aparece qué falta."""
+        pantalla = self.client.get(self.url)
+        self.assertNotContains(pantalla, "Validar y publicar")
+        self.assertContains(pantalla, "falta que el moderador apruebe el contenido")
+        self.aprobar_para_publicar(self.articulo)
+        self.assertContains(self.client.get(self.url), "Validar y publicar")

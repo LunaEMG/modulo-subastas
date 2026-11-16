@@ -85,6 +85,24 @@ class FormularioPropuesta(FormularioConCatalogo):
         help_text="Solo holandesa: cada cuántos minutos baja el precio.",
     )
 
+    # Los campos que dependen del tipo; cuáles aplican lo dice la estrategia (parametros_propios).
+    PARAMETROS_POR_TIPO = (
+        "precio_reserva",
+        "precio_compra_inmediata",
+        "holandesa_precio_inicial",
+        "holandesa_decremento",
+        "holandesa_intervalo_min",
+    )
+
+    def mostrar_solo(self, tipo) -> None:
+        """Paso 2 de la propuesta: deja visibles solo la duración y los parámetros de `tipo`.
+        Solo cambia lo que se pinta; la validación sigue en el servicio y en la estrategia."""
+        for campo in self.PARAMETROS_POR_TIPO:
+            if campo not in tipo.parametros_propios:
+                self.fields.pop(campo, None)
+        self.fields["tipo"].widget = forms.HiddenInput()
+        self.fields["tipo"].initial = tipo.codigo
+
 
 class FormularioMotivo(FormularioConCatalogo):
     motivo = forms.CharField(label="Motivo", widget=forms.Textarea(attrs={"rows": 3}), required=False)
@@ -92,14 +110,19 @@ class FormularioMotivo(FormularioConCatalogo):
 
 class FormularioMonto(FormularioConCatalogo):
     monto = forms.IntegerField(
-        label="Monto (fichas)", widget=forms.NumberInput(attrs={"inputmode": "numeric"})
+        label="Monto (fichas)", widget=forms.NumberInput(
+            attrs={"inputmode": "numeric", "enterkeyhint": "send", "aria-describedby": "ayuda-monto"}
+        )
     )
 
 
 class FormularioBusqueda(forms.Form):
     """CU-08. Todos los filtros son opcionales, así que no hay mensajes de error."""
 
-    texto = forms.CharField(label="Buscar", required=False)
+    texto = forms.CharField(
+        label="Buscar", required=False,
+        widget=forms.TextInput(attrs={"type": "search", "enterkeyhint": "search"}),
+    )
     categoria = forms.ModelChoiceField(
         label="Categoría",
         queryset=Categoria.objects.all(),

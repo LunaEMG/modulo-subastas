@@ -81,3 +81,13 @@ class CU01Registrarse(PruebaSubastas):
         """CA-01.9 El registro por pantalla solo envía nombre y código postal al validador (S-31)."""
         self.client.post(reverse("registro"), FORMULARIO)
         self.assertEqual(self.identidad.consultas, [("Nueva Persona", "07738", None)])
+
+    def test_audit_los_campos_declaran_su_proposito_wcag_1_3_5(self):
+        """Audit (WCAG 1.3.5) Registro y entrar declaran autocomplete; teléfono y código postal abren teclado numérico."""
+        registro = self.client.get(reverse("registro")).content.decode()
+        for atributo in ('autocomplete="name"', 'autocomplete="email"', 'type="tel"', 'autocomplete="tel"',
+                         'inputmode="numeric"', 'autocomplete="postal-code"', 'autocomplete="new-password"'):
+            self.assertIn(atributo, registro)
+        entrar = self.client.get(reverse("entrar")).content.decode()
+        self.assertIn('autocomplete="email"', entrar)
+        self.assertIn('autocomplete="current-password"', entrar)

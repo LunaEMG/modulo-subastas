@@ -49,3 +49,22 @@ class CU14Pagar(PruebaSubastas):
         self.client.force_login(self.crear_comprador())
         respuesta = self.client.post(reverse("pagar", args=[self.adjudicacion.pk]), follow=True)
         self.assertContains(respuesta, "ERR-43")
+
+    def test_pagar_pasa_por_revisa_y_confirma(self):
+        """Rediseño (fase C): «Pagar» lleva a una confirmación con monto y fecha límite; mostrarla no cobra."""
+        confirmar = reverse("confirmar_pago", args=[self.adjudicacion.pk])
+        self.assertContains(self.client.get(reverse("historial")), confirmar)
+        pantalla = self.client.get(confirmar)
+        self.assertContains(pantalla, "Revisa y confirma")
+        self.assertContains(pantalla, "Pagar 1,500 fichas")
+        self.assertContains(pantalla, "Fecha límite")
+        self.adjudicacion.refresh_from_db()
+        self.assertEqual(self.adjudicacion.estado, EstadoAdjudicacion.PENDIENTE_PAGO)
+
+    def test_la_confirmacion_de_pago_es_solo_del_ganador_y_solo_si_falta_pagar(self):
+        """Rediseño (fase C): otro comprador recibe 404; una adjudicación pagada regresa al historial."""
+        confirmar = reverse("confirmar_pago", args=[self.adjudicacion.pk])
+        self.client.post(reverse("pagar", args=[self.adjudicacion.pk]))
+        self.assertRedirects(self.client.get(confirmar), reverse("historial"))
+        self.client.force_login(self.crear_comprador())
+        self.assertEqual(self.client.get(confirmar).status_code, 404)
