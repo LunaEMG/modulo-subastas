@@ -238,10 +238,12 @@ def confirmar_pago(request, adjudicacion_id):
     adjudicacion = get_object_or_404(
         Adjudicacion.objects.select_related("subasta__articulo"),
         pk=adjudicacion_id,
-        ganador=request.user,
     )
+    # Mismas verificaciones y en el mismo orden que cierre.pagar (CA-14.4 y CA-14.6).
+    if adjudicacion.ganador_id != request.user.pk:
+        raise ErrorDeNegocio("ERR-43")
     if adjudicacion.estado != EstadoAdjudicacion.PENDIENTE_PAGO:
-        return redirect("historial")
+        raise ErrorDeNegocio("ERR-44")
     precio = intcomma(adjudicacion.precio_final)
     return render(
         request,

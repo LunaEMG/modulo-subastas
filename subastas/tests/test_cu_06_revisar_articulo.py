@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from subastas.reglas.articulos import AUTOMOVILES
 from subastas.reglas.estados import EstadoArticulo
+from subastas.servicios import consultas
 
 from .base import PruebaSubastas
 
@@ -12,6 +13,15 @@ class CU06RevisarArticulo(PruebaSubastas):
         super().setUp()
         self.articulo = self.registrar_articulo()
         self.client.force_login(self.gestor)
+
+    def test_ca_06_6_el_menu_cuenta_los_articulos_por_revisar(self):
+        """CA-06.6 El menú del gestor cuenta los artículos por revisar y la tarjeta de inicio dice cuántos son (S-34)."""
+        self.assertEqual(
+            consultas.pendientes_por_rol(self.gestor),
+            {"gestor_articulos": 1, "gestor_propuestas": 0, "gestor": 1},
+        )
+        respuesta = self.client.get(reverse("inicio"))
+        self.assertContains(respuesta, '<span class="contador por-atender">1</span> artículo por revisar')
 
     def test_ca_06_1_el_gestor_ve_el_articulo_pendiente_y_lo_aprueba(self):
         """CA-06.1 El artículo registrado aparece en «Pendientes» y al aprobarlo queda listo para proponer (MSG-08)."""

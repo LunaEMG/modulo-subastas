@@ -15,6 +15,10 @@ class CU20Sancionar(PruebaSubastas):
         self.client.force_login(self.moderador)
         self.url = reverse("moderador_usuario", args=[self.infractor.pk])
 
+    def test_rnf_02_el_correo_del_participante_no_se_parte(self):
+        """RNF-02 En la tabla apilada el correo va completo bajo su etiqueta, no partido a media palabra."""
+        self.assertContains(self.client.get(reverse("moderador_bandeja")), '<td class="celda-ancha" data-etiqueta="Correo">')
+
     def test_ca_20_1_la_pantalla_muestra_el_siguiente_nivel_y_lo_aplica(self):
         """CA-20.1 La pantalla indica el siguiente nivel y al aplicarlo queda en el historial (MSG-20)."""
         self.assertContains(self.client.get(self.url), "nivel 1")
@@ -49,8 +53,8 @@ class CU20Sancionar(PruebaSubastas):
         respuesta = self.client.post(reverse("sancionar", args=[gestor.pk]), {"motivo": "X"}, follow=True, **self.desde(reverse("moderador_usuario", args=[gestor.pk])))
         self.assertContains(respuesta, "ERR-65")
 
-    def test_sancionar_pasa_por_revisa_y_confirma(self):
-        """Rediseño (fase C): la sanción muestra nivel, duración y motivo antes de aplicarse; mostrarla no sanciona."""
+    def test_ca_20_6_sancionar_pasa_por_revisa_y_confirma(self):
+        """CA-20.6 La sanción pasa por «Revisa y confirma», que muestra el nivel, la duración y el motivo; mostrar la confirmación no sanciona."""
         self.assertContains(self.client.get(self.url), reverse("confirmar_sancion", args=[self.infractor.pk]))
         pantalla = self.client.post(reverse("confirmar_sancion", args=[self.infractor.pk]), {"motivo": "Spam", "nivel": "1"})
         self.assertContains(pantalla, "Revisa y confirma")
@@ -59,8 +63,10 @@ class CU20Sancionar(PruebaSubastas):
         self.assertContains(pantalla, reverse("sancionar", args=[self.infractor.pk]))
         self.assertFalse(Sancion.objects.exists())
 
-    def test_la_confirmacion_de_sancion_exige_el_motivo_err_49(self):
-        """Rediseño (fase C): sin motivo no se llega a la confirmación; se regresa al usuario con ERR-49."""
+    def test_ca_20_7_sancionar_exige_motivo_err_49(self):
+        """CA-20.7 Sancionar sin motivo se impide con ERR-49 (S-33).
+
+        Sin motivo no se llega a la confirmación; se regresa al usuario."""
         respuesta = self.client.post(
             reverse("confirmar_sancion", args=[self.infractor.pk]), {"motivo": " ", "nivel": "1"}, follow=True, **self.desde(self.url)
         )

@@ -10,14 +10,14 @@ class RN04PrecioMinimo(PruebaSubastas):
         subasta = self.subasta_abierta(costo_salida=5000)
         self.assertEqual(subasta.precio_salida, 5000)
 
-    def test_s_32_el_precio_maximo_es_el_mayor_entero_que_guarda_la_base(self):
-        """S-32 RN-04 no fija precio máximo; el tope es el límite de PositiveIntegerField."""
-        self.assertEqual(precios.PRECIO_MAXIMO, 2_147_483_647)
+    def test_s_32_el_limite_tecnico_es_el_mayor_entero_que_guarda_la_base(self):
+        """S-32 No hay precio máximo de negocio; el límite técnico es el de PositiveIntegerField."""
+        self.assertEqual(precios.LIMITE_TECNICO_FICHAS, 2_147_483_647)
 
     def test_s_32_un_costo_de_salida_al_tope_se_acepta_y_uno_mayor_no(self):
-        """S-32 El costo de salida puede llegar al tope; uno mayor se rechaza con ERR-66."""
-        self.assertEqual(self.subasta_abierta(costo_salida=precios.PRECIO_MAXIMO).precio_salida, precios.PRECIO_MAXIMO)
-        self.assertErrorDeNegocio("ERR-66", self.registrar_articulo, costo_salida=precios.PRECIO_MAXIMO + 1)
+        """S-32 El costo de salida puede llegar al límite técnico; uno mayor se rechaza con ERR-66."""
+        self.assertEqual(self.subasta_abierta(costo_salida=precios.LIMITE_TECNICO_FICHAS).precio_salida, precios.LIMITE_TECNICO_FICHAS)
+        self.assertErrorDeNegocio("ERR-66", self.registrar_articulo, costo_salida=precios.LIMITE_TECNICO_FICHAS + 1)
 
     def test_invalido_articulo_no_autentico_no_se_subasta(self):
         self.valuador.es_autentico = False

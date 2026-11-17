@@ -1,5 +1,5 @@
 from ..mensajes import ErrorDeNegocio
-from .precios import PRECIO_MAXIMO
+from .precios import LIMITE_TECNICO_FICHAS
 
 # RN-13
 FICHAS_POR_PESO = 1
@@ -19,8 +19,8 @@ def validar_monto_fichas(valor) -> int:
         valor = int(valor)
     if not isinstance(valor, int) or valor <= 0:
         raise ErrorDeNegocio("ERR-13")
-    if valor > PRECIO_MAXIMO:
-        raise ErrorDeNegocio("ERR-66", maximo=PRECIO_MAXIMO)
+    if valor > LIMITE_TECNICO_FICHAS:
+        raise ErrorDeNegocio("ERR-66")
     return valor
 
 

@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from subastas.models import Adjudicacion
 from subastas.reglas.pagos import EstadoAdjudicacion
-from subastas.servicios import pujas
+from subastas.servicios import consultas, pujas
 
 from .base import PruebaSubastas
 
@@ -50,8 +50,8 @@ class CU14Pagar(PruebaSubastas):
         respuesta = self.client.post(reverse("pagar", args=[self.adjudicacion.pk]), follow=True)
         self.assertContains(respuesta, "ERR-43")
 
-    def test_pagar_pasa_por_revisa_y_confirma(self):
-        """Rediseño (fase C): «Pagar» lleva a una confirmación con monto y fecha límite; mostrarla no cobra."""
+    def test_ca_14_5_pagar_pasa_por_revisa_y_confirma(self):
+        """CA-14.5 «Pagar» lleva a «Revisa y confirma» con el monto y la fecha límite; mostrar la confirmación no cobra."""
         confirmar = reverse("confirmar_pago", args=[self.adjudicacion.pk])
         self.assertContains(self.client.get(reverse("historial")), confirmar)
         pantalla = self.client.get(confirmar)
@@ -61,10 +61,28 @@ class CU14Pagar(PruebaSubastas):
         self.adjudicacion.refresh_from_db()
         self.assertEqual(self.adjudicacion.estado, EstadoAdjudicacion.PENDIENTE_PAGO)
 
-    def test_la_confirmacion_de_pago_es_solo_del_ganador_y_solo_si_falta_pagar(self):
-        """Rediseño (fase C): otro comprador recibe 404; una adjudicación pagada regresa al historial."""
-        confirmar = reverse("confirmar_pago", args=[self.adjudicacion.pk])
-        self.client.post(reverse("pagar", args=[self.adjudicacion.pk]))
-        self.assertRedirects(self.client.get(confirmar), reverse("historial"))
+    def test_ca_14_4_la_confirmacion_de_un_pago_ajeno_se_rechaza_err_43(self):
+        """CA-14.4 Otro comprador no puede pagar la adjudicación de alguien más (ERR-43).
+
+        Tampoco llega a la confirmación del pago."""
         self.client.force_login(self.crear_comprador())
-        self.assertEqual(self.client.get(confirmar).status_code, 404)
+        respuesta = self.client.get(reverse("confirmar_pago", args=[self.adjudicacion.pk]), follow=True)
+        self.assertContains(respuesta, "ERR-43")
+        self.assertNotContains(respuesta, "Revisa y confirma")
+
+    def test_ca_14_6_una_adjudicacion_pagada_no_se_vuelve_a_pagar_err_44(self):
+        """CA-14.6 Una adjudicación ya pagada no se vuelve a pagar ni a confirmar (ERR-44)."""
+        self.client.post(reverse("pagar", args=[self.adjudicacion.pk]))
+        confirmacion = self.client.get(reverse("confirmar_pago", args=[self.adjudicacion.pk]), follow=True)
+        self.assertContains(confirmacion, "ERR-44")
+        self.assertNotContains(confirmacion, "Revisa y confirma")
+        segundo_pago = self.client.post(reverse("pagar", args=[self.adjudicacion.pk]), follow=True)
+        self.assertContains(segundo_pago, "ERR-44")
+        self.assertEqual(len(self.logistica.solicitudes), 1)
+
+    def test_ca_14_7_el_pago_pendiente_se_ve_en_el_menu_y_en_inicio(self):
+        """CA-14.7 El ganador ve su pago pendiente con un contador junto a «Mi historial» y en la tarjeta de inicio (S-34)."""
+        respuesta = self.client.get(reverse("inicio"))
+        self.assertEqual(consultas.pendientes_por_rol(self.comprador), {"comprador": 1})
+        self.assertContains(respuesta, 'class="contador por-atender">1<', count=2)
+        self.assertContains(respuesta, "pago pendiente")

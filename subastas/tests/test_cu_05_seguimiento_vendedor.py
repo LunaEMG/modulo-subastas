@@ -34,8 +34,10 @@ class CU05Seguimiento(PruebaSubastas):
         self.client.force_login(self.crear_vendedor())
         self.assertContains(self.client.get(self.url, follow=True), "ERR-43")
 
-    def test_rediseno_fase_e_pendientes_del_vendedor(self):
-        """Rediseño (fase E) El menú cuenta los artículos por corregir o proponer y «Mis artículos» los lista arriba."""
+    def test_ca_05_4_el_menu_cuenta_los_articulos_que_requieren_accion(self):
+        """CA-05.4 El menú cuenta los artículos que requieren acción del vendedor (por corregir o por proponer) y «Mis artículos» los lista arriba, en «Requieren tu acción»; sin pendientes no hay contador ni sección (S-34).
+
+        Con un artículo por proponer y otro rechazado, el contador dice 2 y la sección enlaza a ambos."""
         por_proponer = self.articulo_listo()
         rechazado = self.registrar_articulo()
         revision.rechazar_articulo(gestor=self.gestor, articulo_id=rechazado.pk, motivo="Faltan fotos.")
@@ -46,8 +48,10 @@ class CU05Seguimiento(PruebaSubastas):
         self.assertContains(respuesta, reverse("proponer_subasta", args=[por_proponer.pk]))
         self.assertContains(respuesta, reverse("corregir_articulo", args=[rechazado.pk]))
 
-    def test_rediseno_fase_e_sin_pendientes_no_hay_contador_ni_seccion(self):
-        """Rediseño (fase E) Un artículo ya en subasta no requiere acción: no hay contador ni sección."""
+    def test_ca_05_4_sin_pendientes_no_hay_contador_ni_seccion(self):
+        """CA-05.4 El menú cuenta los artículos que requieren acción del vendedor (por corregir o por proponer) y «Mis artículos» los lista arriba, en «Requieren tu acción»; sin pendientes no hay contador ni sección (S-34).
+
+        Un artículo ya en subasta no requiere acción: no hay contador ni sección."""
         respuesta = self.client.get(reverse("mis_articulos"))
         self.assertNotContains(respuesta, "Requieren tu acción")
         self.assertNotContains(respuesta, "contador por-atender")

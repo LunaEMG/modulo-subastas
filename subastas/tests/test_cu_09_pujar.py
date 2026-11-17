@@ -53,8 +53,8 @@ class CU09Pujar(PruebaSubastas):
         self.client.force_login(self.vendedor)
         self.assertContains(self.client.get(self.detalle), "no puedes pujar")
 
-    def test_aceptar_en_la_holandesa_pasa_por_revisa_y_confirma(self):
-        """Rediseño (fase C): «Aceptar» lleva a una confirmación que muestra el precio y no adjudica nada."""
+    def test_ca_09_6_aceptar_en_la_holandesa_pasa_por_revisa_y_confirma(self):
+        """CA-09.6 En la holandesa, «Aceptar» lleva a «Revisa y confirma» con el precio vigente; mostrar la confirmación no adjudica nada."""
         holandesa = self.subasta_abierta(
             costo_salida=1000, tipo="HOLANDESA",
             holandesa_precio_inicial=2000, holandesa_decremento=100, holandesa_intervalo_min=30,
@@ -68,8 +68,8 @@ class CU09Pujar(PruebaSubastas):
         holandesa.refresh_from_db()
         self.assertFalse(hasattr(holandesa, "adjudicacion"))
 
-    def test_rediseno_fase_f_errores_en_alert_y_ayuda_ligada_al_monto(self):
-        """Rediseño (fase F) El error va en la lista role="alert" y el campo de monto apunta a su ayuda."""
+    def test_rnf_02_errores_en_alert_y_ayuda_ligada_al_monto(self):
+        """RNF-02 El error va en la lista role="alert" y el campo de monto apunta a su ayuda."""
         respuesta = self.client.post(reverse("pujar", args=[self.subasta.pk]), {"monto": "900"}, follow=True, **self.desde(self.detalle))
         html = respuesta.content.decode()
         alerta = html.split('role="alert"')[1].split("</ul>")[0]
@@ -77,8 +77,10 @@ class CU09Pujar(PruebaSubastas):
         self.assertIn('aria-describedby="error-monto ayuda-monto"', html)
         self.assertIn('id="ayuda-monto"', html)
 
-    def test_rediseno_movil_la_puja_rechazada_conserva_el_monto_y_avisa_junto_al_campo(self):
-        """Rediseño (móvil) Tras ERR-06 la ficha conserva el monto escrito y repite el error junto al campo."""
+    def test_ca_09_2_la_puja_rechazada_conserva_el_monto_y_avisa_junto_al_campo(self):
+        """CA-09.2 Una puja que no supera el precio actual se rechaza con ERR-06 (RN-06).
+
+        La ficha conserva el monto escrito y repite el error junto al campo."""
         respuesta = self.client.post(reverse("pujar", args=[self.subasta.pk]), {"monto": "900"}, **self.desde(self.detalle))
         self.assertEqual(respuesta.status_code, 200)
         html = respuesta.content.decode()
@@ -87,16 +89,16 @@ class CU09Pujar(PruebaSubastas):
         self.assertIn("ERR-06", html.split('id="error-monto"')[1].split("</ul>")[0])
         self.assertIn('action="%s#puja"' % reverse("pujar", args=[self.subasta.pk]), html)
 
-    def test_rediseno_movil_un_monto_invalido_conserva_lo_escrito(self):
-        """Rediseño (móvil) Un monto que no es entero se rechaza (ERR-13) sin borrar lo que se escribió."""
+    def test_ca_09_7_un_monto_invalido_se_rechaza_con_err_13(self):
+        """CA-09.7 Un monto que no es un número entero de fichas se rechaza con ERR-13 y la ficha conserva lo escrito."""
         respuesta = self.client.post(reverse("pujar", args=[self.subasta.pk]), {"monto": "12.5"}, **self.desde(self.detalle))
         self.assertContains(respuesta, "ERR-13")
         self.assertContains(respuesta, 'value="12.5"')
         self.assertContains(respuesta, 'id="error-monto"')
         self.assertFalse(Puja.objects.exists())
 
-    def test_rediseno_fase_f_confirmacion_en_status(self):
-        """Rediseño (fase F) La confirmación va en la lista role="status", no en la de errores."""
+    def test_rnf_02_confirmacion_en_status(self):
+        """RNF-02 La confirmación va en la lista role="status", no en la de errores."""
         respuesta = self.client.post(reverse("pujar", args=[self.subasta.pk]), {"monto": "1200"}, follow=True)
         html = respuesta.content.decode()
         self.assertIn("MSG-12", html.split('role="status"')[1].split("</ul>")[0])
@@ -108,17 +110,12 @@ class CU09Pujar(PruebaSubastas):
             reverse("pujar", args=[self.subasta.pk]), {"monto": "99999999999999999999"}, follow=True
         )
         self.assertContains(respuesta, "ERR-66")
-        self.assertContains(respuesta, "El monto no puede pasar de 2,147,483,647 fichas.")
+        self.assertContains(respuesta, "El monto supera el valor que el sistema puede registrar.")
         self.assertFalse(Puja.objects.exists())
 
     def test_s_32_con_la_oferta_en_el_tope_no_se_ofrece_pujar(self):
-        """S-32 Con el precio en el tope la ficha lo dice y no ofrece un formulario que solo puede fallar."""
+        """S-32 Con el precio en el límite técnico la ficha lo dice y no ofrece un formulario que solo puede fallar."""
         tope = self.subasta_abierta(costo_salida=2_147_483_647)
         respuesta = self.client.get(reverse("detalle_subasta", args=[tope.pk]))
         self.assertContains(respuesta, "ya no se puede subir")
         self.assertNotContains(respuesta, 'id="puja"')
-
-    def test_datos_extremos_la_ayuda_de_modificar_dice_el_minimo_con_separadores(self):
-        """Datos extremos Al modificar su puja el comprador ve el mínimo con separadores de miles."""
-        self.client.post(reverse("pujar", args=[self.subasta.pk]), {"monto": "1200"})
-        self.assertContains(self.client.get(self.detalle), "Mínimo 1,201 fichas.")
