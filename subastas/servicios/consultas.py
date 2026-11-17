@@ -73,8 +73,8 @@ def resumen_subasta(subasta, usuario=None) -> dict:
         "abierta": abierta,
         "precio_actual": precio,
         "puja_minima": precio + INCREMENTO_MINIMO,
-        # S-32: con el precio en el tope ya no cabe ninguna puja mayor.
-        "puja_al_tope": precio + INCREMENTO_MINIMO > reglas_precios.PRECIO_MAXIMO,
+        # S-32: con el precio en el límite técnico ya no cabe ninguna puja mayor en la base de datos.
+        "puja_al_tope": precio + INCREMENTO_MINIMO > reglas_precios.LIMITE_TECNICO_FICHAS,
         "numero_pujas": subasta.pujas.filter(estado=Puja.Estado.ACTIVA).count(),
         "mi_puja": mi_puja,
         "soy_lider": mi_puja is not None and mas_alta == mi_puja,

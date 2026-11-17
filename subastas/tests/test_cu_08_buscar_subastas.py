@@ -18,15 +18,15 @@ class CU08BuscarSubastas(PruebaSubastas):
         self.assertNotContains(self.client.get(buscar, {"categoria": "Videojuegos"}), "Reloj de prueba")
         self.assertNotContains(self.client.get(buscar, {"tipo": "HOLANDESA"}), "Reloj de prueba")
 
-    def test_datos_extremos_una_sola_ficha_y_titulo_completo(self):
-        """Datos extremos Un precio de 1 se lee «1 ficha»; la tarjeta guarda el título completo aunque lo corte a dos líneas."""
+    def test_rnf_02_una_sola_ficha_y_titulo_completo(self):
+        """RNF-02 Un precio de 1 se lee «1 ficha»; la tarjeta guarda el título completo aunque lo corte a dos líneas."""
         self.subasta_abierta(costo_salida=1)
         respuesta = self.client.get(reverse("buscar_subastas"))
         self.assertContains(respuesta, '1 <span class="unidad">ficha</span>')
         self.assertContains(respuesta, 'title="Reloj de prueba"')
 
-    def test_datos_extremos_galeria_con_foto_principal_y_miniaturas(self):
-        """Datos extremos La ficha muestra la primera foto grande y las demás como miniaturas que abren la imagen completa."""
+    def test_rnf_02_galeria_con_foto_principal_y_miniaturas(self):
+        """RNF-02 La ficha muestra la primera foto grande y las demás como miniaturas que abren la imagen completa."""
         articulo = self.articulo_listo(fotografias=[fotografia(), fotografia(), fotografia()])
         subasta = self.publicar(articulo, self.proponer(articulo))
         html = self.client.get(reverse("detalle_subasta", args=[subasta.pk])).content.decode()
@@ -46,8 +46,8 @@ class CU08BuscarSubastas(PruebaSubastas):
         self.assertContains(detalle, "Mínimo 1,001 fichas")
         self.assertContains(detalle, "Comprar ya por 5,000")
 
-    def test_rediseno_fase_f_tarjetas_con_h2_imagenes_diferidas_y_pagina_actual(self):
-        """Rediseño (fase F) Títulos de tarjeta en h2, portadas con tamaño y carga diferida, y menú con la página actual."""
+    def test_rnf_02_tarjetas_con_h2_imagenes_diferidas_y_pagina_actual(self):
+        """RNF-02 Títulos de tarjeta en h2, portadas con tamaño y carga diferida, y menú con la página actual."""
         respuesta = self.client.get(reverse("buscar_subastas"))
         self.assertContains(respuesta, '<h2 class="titulo-tarjeta">Reloj de prueba</h2>', html=False)
         self.assertContains(respuesta, 'fetchpriority="high"', count=1)
@@ -58,15 +58,15 @@ class CU08BuscarSubastas(PruebaSubastas):
         detalle = self.client.get(reverse("detalle_subasta", args=[self.subasta.pk]))
         self.assertContains(detalle, 'aria-current="true"', count=1)
 
-    def test_rediseno_movil_solo_la_primera_portada_carga_de_inmediato(self):
-        """Rediseño (móvil) La primera portada se pide con prioridad; las siguientes esperan a acercarse."""
+    def test_rnf_02_solo_la_primera_portada_carga_de_inmediato(self):
+        """RNF-02 La primera portada se pide con prioridad; las siguientes esperan a acercarse."""
         self.subasta_abierta()
         respuesta = self.client.get(reverse("buscar_subastas"))
         self.assertContains(respuesta, 'fetchpriority="high"', count=1)
         self.assertContains(respuesta, 'loading="lazy"', count=1)
 
-    def test_rediseno_movil_la_busqueda_usa_el_teclado_de_buscar(self):
-        """Rediseño (móvil) El campo de búsqueda es type="search" y la tecla Intro dice «Buscar»."""
+    def test_rnf_02_la_busqueda_usa_el_teclado_de_buscar(self):
+        """RNF-02 El campo de búsqueda es type="search" y la tecla Intro dice «Buscar»."""
         respuesta = self.client.get(reverse("buscar_subastas"))
         self.assertContains(respuesta, 'type="search"')
         self.assertContains(respuesta, 'enterkeyhint="search"')

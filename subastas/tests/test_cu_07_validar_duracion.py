@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.urls import reverse
 
 from subastas.reglas.estados import EstadoArticulo, EstadoSubasta
+from subastas.servicios import consultas
 
 from .base import PruebaSubastas
 
@@ -49,8 +50,19 @@ class CU07ValidarDuracion(PruebaSubastas):
         respuesta = self.client.post(reverse("validar_duracion", args=[self.subasta.pk]), follow=True, **self.desde(self.url))
         self.assertContains(respuesta, "ERR-03")
 
-    def test_sin_aprobacion_no_se_ofrece_validar_y_se_explica_lo_que_falta(self):
-        """Rediseño (fase C): sin la aprobación del moderador no aparece «Validar y publicar»; aparece qué falta."""
+    def test_ca_07_5_el_menu_cuenta_las_propuestas_por_validar(self):
+        """CA-07.5 El menú del gestor cuenta las propuestas por validar y la tarjeta de inicio dice cuántas son (S-34)."""
+        self.assertEqual(
+            consultas.pendientes_por_rol(self.gestor),
+            {"gestor_articulos": 0, "gestor_propuestas": 1, "gestor": 1},
+        )
+        respuesta = self.client.get(reverse("inicio"))
+        self.assertContains(respuesta, '<span class="contador por-atender">1</span> propuesta por validar')
+
+    def test_ca_07_2_sin_aprobacion_no_se_ofrece_validar_y_se_explica_lo_que_falta(self):
+        """CA-07.2 Sin la aprobación del moderador la pantalla lo advierte y publicar se rechaza con ERR-48 (S-10).
+
+        No aparece «Validar y publicar»; aparece qué falta."""
         pantalla = self.client.get(self.url)
         self.assertNotContains(pantalla, "Validar y publicar")
         self.assertContains(pantalla, "falta que el moderador apruebe el contenido")

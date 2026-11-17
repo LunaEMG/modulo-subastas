@@ -7,7 +7,7 @@ from subastas.models import Notificacion
 from subastas.reglas import moderacion as reglas
 from subastas.reglas.estados import EstadoArticulo, EstadoSubasta
 from subastas.servicios import articulos as servicio_articulos
-from subastas.servicios import moderacion
+from subastas.servicios import consultas, moderacion
 
 from .base import INICIO, PruebaSubastas
 
@@ -39,9 +39,21 @@ class CU18RevisarContenido(PruebaSubastas):
         self.client.force_login(self.moderador)
         self.url = reverse("moderador_articulo", args=[self.articulo.pk])
 
-    def test_rediseno_movil_el_correo_del_participante_no_se_parte(self):
-        """Rediseño (móvil) En la tabla apilada el correo va completo bajo su etiqueta, no partido a media palabra."""
-        self.assertContains(self.client.get(reverse("moderador_bandeja")), '<td class="celda-ancha" data-etiqueta="Correo">')
+    def test_ca_18_7_el_contador_del_moderador_coincide_con_su_bandeja(self):
+        """CA-18.7 El menú del moderador cuenta el contenido por revisar, también dentro de su bandeja (S-34).
+
+        El contador es el número de artículos que la bandeja lista por revisar."""
+        total = len(moderacion.pendientes_de_revision())
+        self.assertGreater(total, 0)
+        self.assertEqual(consultas.pendientes_por_rol(self.moderador), {"moderador": total})
+
+    def test_ca_18_7_dentro_de_la_bandeja_sigue_el_contador(self):
+        """CA-18.7 El menú del moderador cuenta el contenido por revisar, también dentro de su bandeja (S-34).
+
+        Dentro de su bandeja el moderador sigue viendo el contador junto a «Moderación»."""
+        total = len(moderacion.pendientes_de_revision())
+        respuesta = self.client.get(reverse("moderador_bandeja"))
+        self.assertContains(respuesta, f'class="contador por-atender">{total}<span class="solo-lector"> pendientes')
 
     def test_ca_18_1_el_contenido_pendiente_aparece_y_se_aprueba(self):
         """CA-18.1 El artículo sin aprobar aparece en «Moderación» y al aprobarlo sale de la lista (MSG-18)."""

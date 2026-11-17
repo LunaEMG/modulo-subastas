@@ -1,8 +1,9 @@
 from ..mensajes import ErrorDeNegocio
 
-# RN-04 no fija precio máximo. S-32: el tope es el mayor entero que PositiveIntegerField guarda en
-# cualquier base de datos de Django; vale para todo monto en fichas (precios, pujas, decrementos).
-PRECIO_MAXIMO = 2_147_483_647
+# No hay precio máximo de negocio (RN-04). S-32: límite técnico de almacenamiento, no regla de negocio.
+# Es el mayor entero que PositiveIntegerField guarda en cualquier base de datos de Django; un monto en
+# fichas mayor (precio, puja o decremento) no cabe en la columna, así que se rechaza antes de guardarlo.
+LIMITE_TECNICO_FICHAS = 2_147_483_647
 
 
 def precio_minimo_avalado(

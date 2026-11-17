@@ -46,8 +46,8 @@ class CU19RetirarPublicacion(PruebaSubastas):
             moderador=self.moderador, articulo_id=self.subasta.articulo_id, motivo="Tarde",
         )
 
-    def test_retirar_pasa_por_revisa_y_confirma(self):
-        """Rediseño (fase C): «Retirar publicación» muestra el motivo y cuántas pujas quedan sin efecto, sin retirar nada."""
+    def test_ca_19_5_retirar_pasa_por_revisa_y_confirma(self):
+        """CA-19.5 «Retirar publicación» lleva a «Revisa y confirma» con el motivo y cuántas pujas activas quedan sin efecto; mostrar la confirmación no retira nada."""
         articulo_id = self.subasta.articulo_id
         self.assertContains(self.client.get(self.url), reverse("confirmar_retiro", args=[articulo_id]))
         pantalla = self.client.post(reverse("confirmar_retiro", args=[articulo_id]), {"motivo": "Artículo robado"})
@@ -58,8 +58,10 @@ class CU19RetirarPublicacion(PruebaSubastas):
         self.subasta.refresh_from_db()
         self.assertEqual(self.subasta.estado, EstadoSubasta.ABIERTA)
 
-    def test_la_confirmacion_de_retiro_exige_el_motivo_err_49(self):
-        """Rediseño (fase C): sin motivo no se llega a la confirmación; se regresa al artículo con ERR-49."""
+    def test_ca_19_3_la_confirmacion_de_retiro_exige_el_motivo(self):
+        """CA-19.3 Retirar sin motivo se impide con ERR-49.
+
+        Sin motivo no se llega a la confirmación; se regresa al artículo."""
         respuesta = self.client.post(
             reverse("confirmar_retiro", args=[self.subasta.articulo_id]), {"motivo": ""}, follow=True, **self.desde(self.url)
         )
