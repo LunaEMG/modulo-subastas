@@ -2,13 +2,15 @@
 {% load humanize %}
 {% block titulo %}Revisa y confirma · Casa de Subastas{% endblock %}
 {% block contenido %}
-<p><a href="{{ volver_url }}">← {{ volver_texto }}</a></p>
-<div class="tarjeta estrecho confirmacion">
+<p class="migas"><a href="{{ volver_url }}">← {{ volver_texto }}</a></p>
+<div class="confirmacion">
   <h1>Revisa y confirma</h1>
-  <p><strong>{{ asunto }}</strong></p>
+  <p class="asunto"><strong>{{ asunto }}</strong></p>
   {% if monto is not None %}
-  <p class="suave sin-margen">{{ monto_etiqueta }}</p>
-  <p class="precio">{{ monto|intcomma }} <span class="unidad">fichas</span></p>
+  <div class="bloque-monto">
+    <p class="suave sin-margen">{{ monto_etiqueta }}</p>
+    <p class="precio">{{ monto|intcomma }} <span class="unidad">fichas</span></p>
+  </div>
   {% endif %}
   {% if datos %}
   <dl class="datos">

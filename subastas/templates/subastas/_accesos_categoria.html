@@ -1,0 +1,3 @@
+{% load presentacion %}{% url 'buscar_subastas' as buscar %}{# Ícono desde icono_categoria (un solo mapeo); el CSS solo lo pinta con la máscara común. #}
+{% for c in categorias %}<a class="acceso-categoria" href="{% if entrar %}{% url 'entrar' %}?next={% filter urlencode:'' %}{{ buscar }}?categoria={{ c.nombre|urlencode }}{% endfilter %}{% else %}{{ buscar }}?categoria={{ c.nombre|urlencode }}{% endif %}"{% if c.nombre == activa %} aria-current="true"{% endif %} style="--icono: url('{{ c|icono_categoria }}')"><span>{{ c.nombre }}</span></a>
+{% endfor %}

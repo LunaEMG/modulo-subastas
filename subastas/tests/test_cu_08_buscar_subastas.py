@@ -1,6 +1,8 @@
 """CU-08 Buscar subastas, filtrar y consultar el detalle (Comprador)."""
 from django.urls import reverse
 
+from subastas import reloj
+
 from .base import PruebaSubastas, fotografia
 
 
@@ -70,3 +72,36 @@ class CU08BuscarSubastas(PruebaSubastas):
         respuesta = self.client.get(reverse("buscar_subastas"))
         self.assertContains(respuesta, 'type="search"')
         self.assertContains(respuesta, 'enterkeyhint="search"')
+
+    def test_rnf_02_la_tarjeta_lleva_el_color_y_la_placa_de_su_categoria(self):
+        """RNF-02 Cada tarjeta lleva la clase de su categoría (cat-<nombre>) y la categoría en una placa sobre la foto."""
+        respuesta = self.client.get(reverse("buscar_subastas"))
+        self.assertContains(respuesta, "cat-relojes")
+        self.assertContains(
+            respuesta,
+            '<span class="chip-categoria" style="--icono: url(\'/static/subastas/iconos/watch.svg\')">Relojes</span>',
+            html=False,
+        )
+
+    def test_rnf_02_la_barra_dice_cuantos_resultados_hay(self):
+        """RNF-02 La barra de resultados dice cuántas subastas encontró la búsqueda, en singular o plural."""
+        buscar = reverse("buscar_subastas")
+        self.assertContains(self.client.get(buscar), '<p class="total">1 resultado</p>', html=False)
+        self.subasta_abierta()
+        self.assertContains(self.client.get(buscar), '<p class="total">2 resultados</p>', html=False)
+        self.assertContains(self.client.get(buscar, {"tipo": "HOLANDESA"}), '<p class="total">0 resultados</p>', html=False)
+
+    def test_rnf_02_la_tarjeta_dice_el_tiempo_restante_y_guarda_la_fecha_completa(self):
+        """RNF-02 La tarjeta muestra «quedan…» y conserva la fecha completa de cierre en su title."""
+        respuesta = self.client.get(reverse("buscar_subastas")).content.decode()
+        self.assertIn(">quedan 1 d 0 h</time>", respuesta)
+        cierre = self.subasta.fecha_cierre
+        self.assertIn(f'title="cierra {reloj.formato(cierre)}"', respuesta)
+        self.assertNotIn('class="tiempo urgente"', respuesta)
+
+    def test_rnf_02_con_menos_de_un_dia_el_tiempo_se_marca_urgente(self):
+        """RNF-02 Cuando falta menos de un día para el cierre, el tiempo restante se marca como urgente."""
+        self.reloj.avanzar(hours=2)
+        respuesta = self.client.get(reverse("buscar_subastas"))
+        self.assertContains(respuesta, 'class="tiempo urgente"', count=1)
+        self.assertContains(respuesta, ">quedan 22 h 0 min</time>", html=False)

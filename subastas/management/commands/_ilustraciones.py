@@ -1,17 +1,20 @@
 """Ilustraciones planas de los artículos de demostración, dibujadas con Pillow.
 
-No se descarga nada: cada figura se compone con formas simples sobre el papel hueso
-de la interfaz. Se dibuja al doble de tamaño y se reduce, para que los bordes salgan suaves.
+No se descarga nada: cada figura se compone con formas simples y se pinta a sangre sobre el
+tinte de su categoría («El Mostrador»): detrás del objeto va un disco del tinte
+aclarado y la sombra del piso es el tinte mezclado con el tono profundo de la categoría.
+Los objetos conservan sus colores. Se dibuja al doble de tamaño y se reduce, para que los
+bordes salgan suaves.
 El módulo empieza con guion bajo para que Django no lo tome como comando.
 """
 import math
+from dataclasses import dataclass
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageColor, ImageDraw
 
 ANCHO, ALTO = 640, 480
 ESCALA = 2
 
-HUESO = "#f4efe6"
 CREMA = "#fbf7ef"
 TINTA = "#1c1917"
 TINTA_SUAVE = "#57534e"
@@ -20,15 +23,53 @@ ORO_CLARO = "#ca8a04"
 LACRE = "#9e2a1e"
 PLATA = "#b8b4ac"
 PLATA_OSCURA = "#8a857c"
-SOMBRA = "#e4dccd"
+BLANCO = "#ffffff"
+
+
+def mezclar(a: str, b: str, t: float) -> str:
+    """El color que queda a una fracción t del camino de a hacia b."""
+    ca, cb = ImageColor.getrgb(a), ImageColor.getrgb(b)
+    return "#%02x%02x%02x" % tuple(round(x + (y - x) * t) for x, y in zip(ca, cb))
+
+
+@dataclass(frozen=True)
+class Paleta:
+    """Fondo de la foto a partir del par de colores de la categoría (tinte y profundo)."""
+
+    tinte: str
+    profundo: str
+
+    @property
+    def disco(self) -> str:
+        return mezclar(self.tinte, BLANCO, 0.45)
+
+    @property
+    def sombra(self) -> str:
+        return mezclar(self.tinte, self.profundo, 0.22)
+
+
+# Los mismos pares que las clases cat-* de estilos.css.
+PALETAS = {
+    "automoviles": Paleta("#d3e6ea", "#0f3440"),
+    "relojes": Paleta("#e0e8d2", "#2c3a1c"),
+    "videojuegos": Paleta("#e0ddf6", "#241f52"),
+    "oficina": Paleta("#dfe4eb", "#2a3038"),
+}
+PALETA_NEUTRA = Paleta("#e6e8eb", "#3a3f47")
+
+# La paleta del dibujo en curso; ilustrar() la fija antes de llamar a cada figura.
+_paleta = PALETA_NEUTRA
 
 
 class Lienzo:
     """Coordenadas en el tamaño final (640 × 480); el dibujo se hace al doble."""
 
-    def __init__(self, fondo=HUESO):
-        self.imagen = Image.new("RGB", (ANCHO * ESCALA, ALTO * ESCALA), fondo)
+    def __init__(self, paleta: Paleta | None = None):
+        self.paleta = paleta or _paleta
+        self.fondo = self.paleta.tinte
+        self.imagen = Image.new("RGB", (ANCHO * ESCALA, ALTO * ESCALA), self.fondo)
         self.d = ImageDraw.Draw(self.imagen)
+        self.elipse(70, 10, 570, 470, self.paleta.disco)
 
     @staticmethod
     def _p(puntos):
@@ -60,7 +101,7 @@ class Lienzo:
         self.d.arc(self._caja(x0, y0, x1, y1), inicio, fin, fill=color, width=grosor * ESCALA)
 
     def piso(self, cx, ancho, y=420):
-        self.elipse(cx - ancho / 2, y - 14, cx + ancho / 2, y + 14, SOMBRA)
+        self.elipse(cx - ancho / 2, y - 14, cx + ancho / 2, y + 14, self.paleta.sombra)
 
     def terminar(self):
         return self.imagen.resize((ANCHO, ALTO), Image.LANCZOS)
@@ -165,7 +206,7 @@ def motocicleta(color):
     l.piso(320, 520, y=410)
     for cx in (170, 470):
         l.circulo(cx, 330, 78, TINTA)
-        l.circulo(cx, 330, 50, HUESO)
+        l.circulo(cx, 330, 50, l.paleta.disco)
         l.circulo(cx, 330, 16, PLATA_OSCURA)
     l.linea([(170, 330), (290, 300), (380, 300), (470, 330)], PLATA_OSCURA, 10)  # chasis
     l.linea([(470, 330), (430, 190)], PLATA_OSCURA, 10)  # horquilla
@@ -268,8 +309,30 @@ COLOR_POR_TITULO = {
 }
 
 
+# La categoría de cada artículo de demostración, para pintarlo sobre su tinte.
+CATEGORIA_POR_TITULO = {
+    "Reloj de bolsillo": "relojes",
+    "Silla ejecutiva": "oficina",
+    "Reloj imitación": "relojes",
+    "Consola portátil": "videojuegos",
+    "Motocicleta 250 cc": "automoviles",
+    "Sedán 2015": "automoviles",
+    "Reloj cronógrafo": "relojes",
+    "Colección retro": "videojuegos",
+    "Escritorio de roble": "oficina",
+    "Lámpara de escritorio": "oficina",
+}
+
+
 def ilustrar(titulo: str, color: str | None = None) -> Image.Image:
     """La ilustración del artículo; un título sin dibujo propio recibe un bloque de su color."""
+    global _paleta
     color = color or COLOR_POR_TITULO.get(titulo, PLATA)
     dibujo = POR_TITULO.get(titulo)
-    return dibujo(color) if dibujo else Image.new("RGB", (ANCHO, ALTO), color)
+    if not dibujo:
+        return Image.new("RGB", (ANCHO, ALTO), color)
+    _paleta = PALETAS.get(CATEGORIA_POR_TITULO.get(titulo, ""), PALETA_NEUTRA)
+    try:
+        return dibujo(color)
+    finally:
+        _paleta = PALETA_NEUTRA

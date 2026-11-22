@@ -1,28 +1,44 @@
 {% extends "subastas/base.html" %}
-{% load humanize %}
+{% load humanize presentacion %}
 {% block titulo %}Subastas abiertas · Casa de Subastas{% endblock %}
 {% block contenido %}
-<h1>Subastas abiertas</h1>
-<form method="get" class="tarjeta en-linea" role="search">
-  <div><label for="id_texto">Buscar</label>{{ formulario.texto }}</div>
-  <div><label for="id_categoria">Categoría</label>{{ formulario.categoria }}</div>
-  <div><label for="id_tipo">Tipo</label>{{ formulario.tipo }}</div>
-  <button class="boton" type="submit">Filtrar</button>
+{# Buscador en píldora, persistente (sticky). Teléfono: [lupa · texto | Filtrar] y abajo Categoría y Tipo; escritorio: una sola píldora y «Filtrar» aparte. #}
+<div class="busqueda">
+<form method="get" class="buscador" role="search">
+  <div class="seg-texto"><label for="id_texto" class="solo-lector">Buscar</label>{{ formulario.texto }}</div>
+  <div class="filtros">
+    <div class="seg-filtro"><label for="id_categoria">Categoría</label>{{ formulario.categoria }}</div>
+    <div class="seg-filtro seg-ultimo"><label for="id_tipo">Tipo</label>{{ formulario.tipo }}</div>
+  </div>
+  <button class="boton boton-buscar" type="submit">Filtrar</button>
 </form>
+</div>
+{# Un chip por categoría (accesos_categoria); el de la categoría filtrada lleva aria-current. #}
+<nav class="accesos-categoria accesos-listado" aria-label="Categorías">{% accesos_categoria activa=formulario.categoria.value %}</nav>
+<div class="barra-resultados">
+  <h1>Subastas abiertas</h1>
+  <p class="total">{{ resultados|length|intcomma }} resultado{{ resultados|length|pluralize }}</p>
+</div>
 {% if resultados %}
-<div class="rejilla">
+{# Lista en el teléfono y mosaico desde 640 px; lo decide solo el CSS. #}
+<div class="rejilla-subastas">
   {% for r in resultados %}
-  <a class="tarjeta tarjeta-enlace" href="{% url 'detalle_subasta' r.subasta.pk %}" title="{{ r.articulo.titulo }}">
-    {% with foto=r.articulo.portada %}{% if foto %}<img class="foto-portada" src="{{ foto.archivo.url }}" alt="" width="400" height="300" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">{% else %}<div class="foto-portada foto-ausente"><span>Sin fotografías</span></div>{% endif %}{% endwith %}
-    <h2 class="titulo-tarjeta">{{ r.articulo.titulo }}</h2>
-    <span class="tipo-categoria"><span class="etiqueta">{{ r.tipo.nombre }}</span> <span class="suave">{{ r.articulo.categoria }}</span></span>
-    <span class="precio">{{ r.precio_actual|intcomma }} <span class="unidad">ficha{{ r.precio_actual|pluralize }}</span></span>
-    <span class="suave">{{ r.numero_pujas|intcomma }} puja{{ r.numero_pujas|pluralize }} · cierra {{ r.subasta.fecha_cierre|date:"d/m/Y H:i" }}</span>
-    {% if r.mi_puja %}<span class="sello {% if r.soy_lider %}sello-ganando{% else %}sello-superado{% endif %}">{% if r.soy_lider %}Vas ganando{% else %}Te superaron{% endif %}</span>{% endif %}
+  <a class="tarjeta-subasta tarjeta-enlace cat-{{ r.articulo.categoria.nombre|slugify }}" href="{% url 'detalle_subasta' r.subasta.pk %}" title="{{ r.articulo.titulo }}">
+    <div class="portada">
+      {% with foto=r.articulo.portada %}{% if foto %}<img src="{{ foto.archivo.url }}" alt="" width="400" height="300" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">{% else %}<div class="foto-ausente"><span>Sin fotografías</span></div>{% endif %}{% endwith %}
+      {% if r.mi_puja %}<span class="sello {% if r.soy_lider %}sello-ganando{% else %}sello-superado{% endif %}">{% if r.soy_lider %}Vas ganando{% else %}Te superaron{% endif %}</span>{% endif %}
+      <span class="chip-categoria" style="--icono: url('{{ r.articulo.categoria|icono_categoria }}')">{{ r.articulo.categoria }}</span>
+    </div>
+    <div class="cuerpo-tarjeta">
+      <h2 class="titulo-tarjeta">{{ r.articulo.titulo }}</h2>
+      <span class="precio">{{ r.precio_actual|intcomma }} <span class="unidad">ficha{{ r.precio_actual|pluralize }}</span></span>
+      <span class="meta"><span class="etiqueta">{{ r.tipo.nombre }}</span> <span class="pujas">{{ r.numero_pujas|intcomma }} puja{{ r.numero_pujas|pluralize }}</span></span>
+      {% with cierre=r.subasta.fecha_cierre %}{% if cierre|tiempo_restante %}<time class="tiempo{% if cierre|es_urgente %} urgente{% endif %}" datetime="{{ cierre|date:'c' }}" title="cierra {{ cierre|fecha_completa }}">{{ cierre|tiempo_restante }}</time>{% endif %}{% endwith %}
+    </div>
   </a>
   {% endfor %}
 </div>
 {% else %}
-<p class="vacio">No hay subastas abiertas con esos filtros.</p>
+<p class="vacio vacio-busqueda">No hay subastas abiertas con esos filtros.</p>
 {% endif %}
 {% endblock %}
