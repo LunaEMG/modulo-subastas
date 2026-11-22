@@ -57,6 +57,16 @@ def subastas_abiertas(*, texto: str = "", categoria: str = "", tipo: str = ""):
     return subastas.order_by("fecha_cierre", "id")
 
 
+def subastas_visibles(usuario):
+    """S-36: las abiertas, más aquellas en las que el usuario pujó, ganó o es el vendedor."""
+    return Subasta.objects.filter(
+        Q(estado=EstadoSubasta.ABIERTA)
+        | Q(pujas__comprador=usuario)
+        | Q(adjudicacion__ganador=usuario)
+        | Q(articulo__vendedor=usuario)
+    ).distinct()
+
+
 def resumen_subasta(subasta, usuario=None) -> dict:
     instante = reloj.ahora()
     estrategia = tipos.obtener(subasta.tipo)

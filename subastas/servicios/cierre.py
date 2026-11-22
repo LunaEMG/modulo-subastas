@@ -1,6 +1,7 @@
 import logging
 
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 from .. import eventos, integraciones, reloj
 from .. import subastas_tipos as tipos
@@ -58,8 +59,8 @@ def cerrar_subasta(subasta_id: int):
 # CU-14
 @transaction.atomic
 def pagar(*, comprador, adjudicacion_id: int) -> Adjudicacion:
-    adjudicacion = Adjudicacion.objects.select_related("subasta__articulo__vendedor").get(
-        pk=adjudicacion_id
+    adjudicacion = get_object_or_404(
+        Adjudicacion.objects.select_related("subasta__articulo__vendedor"), pk=adjudicacion_id
     )
     if adjudicacion.ganador_id != comprador.pk:
         raise ErrorDeNegocio("ERR-43")

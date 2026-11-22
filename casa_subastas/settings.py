@@ -51,6 +51,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "subastas.middleware.SinCacheConSesionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "subastas.middleware.ProcesoDelTiempoMiddleware",
@@ -92,6 +93,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "subastas.Usuario"
 LOGIN_URL = "entrar"
+# S-37: la sesión termina al cerrar el navegador o tras 60 minutos sin actividad.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 60 * 60
+SESSION_SAVE_EVERY_REQUEST = True
 if EJECUTANDO_PRUEBAS:
     # MD5 solo en pruebas, para que no tarden.
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

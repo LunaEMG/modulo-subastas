@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 from .. import reloj
 from .. import subastas_tipos as tipos
@@ -14,7 +15,7 @@ from .transiciones import cambiar_estado_articulo
 
 
 def articulo_propio(vendedor, articulo_id: int) -> Articulo:
-    articulo = Articulo.objects.select_related("categoria", "vendedor").get(pk=articulo_id)
+    articulo = get_object_or_404(Articulo.objects.select_related("categoria", "vendedor"), pk=articulo_id)
     if articulo.vendedor_id != vendedor.pk:
         raise ErrorDeNegocio("ERR-43")
     return articulo

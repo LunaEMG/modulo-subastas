@@ -1,6 +1,11 @@
 """CU-02 Iniciar sesión con correo, contraseña y código al móvil (todos los actores).
 Las reglas del código están en test_rf_02_inicio_sesion.py."""
+from datetime import timedelta
+
+from django.conf import settings
+from django.contrib.sessions.models import Session
 from django.urls import reverse
+from django.utils import timezone
 
 from subastas.servicios import autenticacion
 
@@ -49,3 +54,39 @@ class CU02IniciarSesion(PruebaSubastas):
     def test_ca_02_5_sin_el_primer_paso_no_hay_pantalla_de_codigo(self):
         """CA-02.5 La pantalla del código no se abre sin haber pasado correo y contraseña."""
         self.assertRedirects(self.client.get(reverse("verificar_codigo")), reverse("entrar"))
+
+    def test_s_35_con_sesion_no_se_guarda_en_cache_y_tras_salir_se_pide_entrar(self):
+        """S-35 Con sesión, las páginas llevan Cache-Control: no-store; sin sesión, no.
+        Tras «Salir», volver a «Buscar subastas» redirige a «Entrar»."""
+        self.client.force_login(self.usuario)
+        con_sesion = self.client.get(reverse("buscar_subastas"))
+        self.assertEqual(con_sesion.status_code, 200)
+        self.assertIn("no-store", con_sesion.get("Cache-Control", ""))
+
+        self.client.post(reverse("salir"))
+        portada = self.client.get(reverse("inicio"))
+        self.assertNotIn("no-store", portada.get("Cache-Control", ""))
+
+        tras_salir = self.client.get(reverse("buscar_subastas"))
+        self.assertEqual(tras_salir.status_code, 302)
+        self.assertTrue(tras_salir.url.startswith(reverse("entrar")))
+
+    def test_s_37_la_sesion_vence_al_cerrar_el_navegador_o_tras_60_minutos_sin_actividad(self):
+        """S-37 La cookie de sesión no sobrevive al navegador; cada petición renueva el plazo de 60 minutos
+        y, vencido, la siguiente página privada pide «Entrar»."""
+        self._entrar()
+        self.client.post(reverse("verificar_codigo"), {"codigo": self.codigo_movil.ultimo_codigo})
+        cookie = self.client.cookies[settings.SESSION_COOKIE_NAME]
+        self.assertEqual(cookie["max-age"], "")
+        self.assertEqual(cookie["expires"], "")
+        self.assertEqual(self.client.session.get_expiry_age(), 60 * 60)
+
+        sesion = Session.objects.filter(session_key=cookie.value)
+        sesion.update(expire_date=timezone.now() + timedelta(minutes=1))
+        self.assertEqual(self.client.get(reverse("buscar_subastas")).status_code, 200)
+        self.assertGreater(sesion.get().expire_date, timezone.now() + timedelta(minutes=59))
+
+        sesion.update(expire_date=timezone.now() - timedelta(seconds=1))
+        vencida = self.client.get(reverse("buscar_subastas"))
+        self.assertEqual(vencida.status_code, 302)
+        self.assertTrue(vencida.url.startswith(reverse("entrar")))

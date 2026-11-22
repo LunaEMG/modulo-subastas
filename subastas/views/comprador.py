@@ -38,7 +38,10 @@ def buscar_subastas(request):
 @requiere_sesion
 def detalle_subasta(request, subasta_id, formulario=None):
     subasta = get_object_or_404(
-        Subasta.objects.select_related("articulo__categoria", "articulo__vendedor"), pk=subasta_id
+        consultas.subastas_visibles(request.user).select_related(
+            "articulo__categoria", "articulo__vendedor"
+        ),
+        pk=subasta_id,
     )
     contexto = consultas.resumen_subasta(subasta, request.user)
     contexto["formulario"] = formulario or FormularioMonto(initial={"monto": contexto["puja_minima"]})
