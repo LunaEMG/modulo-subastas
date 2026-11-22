@@ -11,7 +11,7 @@
 </div>
 <p class="suave">Cada aviso también se envía a tu correo.</p>
 {% for aviso in avisos %}
-<div class="tarjeta {% if not aviso.leida_en %}no-leida{% endif %}">
+<div class="tarjeta aviso {% if not aviso.leida_en %}no-leida{% endif %}">
   <h2 class="titulo-tarjeta">{% if not aviso.leida_en %}<span class="marca-nuevo">Nuevo</span> {% endif %}{{ aviso.asunto }}</h2>
   <p>{{ aviso.mensaje }}</p>
   <p class="suave">
@@ -21,6 +21,6 @@
   </p>
 </div>
 {% empty %}
-<p class="vacio">No tienes avisos.</p>
+<p class="vacio vacio-avisos">No tienes avisos.</p>
 {% endfor %}
 {% endblock %}

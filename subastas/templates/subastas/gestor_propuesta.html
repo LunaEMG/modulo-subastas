@@ -2,7 +2,7 @@
 {% load humanize %}
 {% block titulo %}Validar propuesta · Casa de Subastas{% endblock %}
 {% block contenido %}
-<p><a href="{% url 'gestor_bandeja' %}">← Pendientes</a></p>
+<p class="migas"><a href="{% url 'gestor_bandeja' %}">← Pendientes</a></p>
 <h1>Propuesta de subasta</h1>
 <div class="tarjeta estrecho">
   <p><strong>{{ subasta.articulo.titulo }}</strong> <span class="suave">de {{ subasta.articulo.vendedor }}</span></p>

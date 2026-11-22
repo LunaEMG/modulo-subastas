@@ -1,7 +1,7 @@
 {% extends "subastas/base.html" %}
 {% block titulo %}Sanciones · Casa de Subastas{% endblock %}
 {% block contenido %}
-<p><a href="{% url 'moderador_bandeja' %}">← Moderación</a></p>
+<p class="migas"><a href="{% url 'moderador_bandeja' %}">← Moderación</a></p>
 <h1>{{ sancionado.nombre }}</h1>
 <div class="dos-columnas">
   <div class="tarjeta">
@@ -36,7 +36,7 @@
       <button class="boton peligro" type="submit">Aplicar sanción de nivel {{ nivel }}</button>
     </form>
     {% else %}
-    <p class="vacio">El usuario ya fue dado de baja de forma definitiva.</p>
+    <p class="vacio vacio-definitivo">El usuario ya fue dado de baja de forma definitiva.</p>
     {% endif %}
   </div>
 </div>

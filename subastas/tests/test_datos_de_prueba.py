@@ -2,6 +2,7 @@
 import tempfile
 from io import StringIO
 from pathlib import Path
+from unittest import mock
 
 from django.core.management import call_command
 from django.test import TestCase, override_settings
@@ -25,6 +26,16 @@ class CargarDatosDePrueba(TestCase):
         self.addCleanup(ajustes.disable)
         integraciones.restaurar()
         reloj.establecer_reloj(None)
+
+    def _sin_fotos_reales(self):
+        """Las ilustraciones son el respaldo cuando falta la carpeta de fotos."""
+        vacia = tempfile.TemporaryDirectory()
+        self.addCleanup(vacia.cleanup)
+        parche = mock.patch(
+            "subastas.management.commands.cargar_datos_prueba.FOTOS_DEMO", Path(vacia.name)
+        )
+        parche.start()
+        self.addCleanup(parche.stop)
 
     def _cargar(self, *argumentos):
         salida = StringIO()
@@ -71,12 +82,13 @@ class CargarDatosDePrueba(TestCase):
         self.assertIn("ya existían", self._cargar())
         self.assertEqual((Articulo.objects.count(), Usuario.objects.count()), (articulos, 5))
 
-    def test_las_fotografias_son_ilustraciones_generadas_localmente(self):
-        """Cada artículo de demostración trae un dibujo, no un bloque de un solo color."""
+    def test_sin_fotos_reales_las_fotografias_son_ilustraciones_generadas_localmente(self):
+        """Si falta la foto, cada artículo de demostración trae un dibujo, no un bloque de un solo color."""
         from PIL import Image
 
         from subastas.models import Fotografia
 
+        self._sin_fotos_reales()
         self._cargar()
         for foto in Fotografia.objects.all():
             with foto.archivo.open("rb") as archivo:
@@ -88,6 +100,7 @@ class CargarDatosDePrueba(TestCase):
         """--redibujar sobrescribe los archivos de las fotos existentes y deja la base igual (RNF-01)."""
         from subastas.models import Fotografia
 
+        self._sin_fotos_reales()
         self._cargar()
         antes = list(Fotografia.objects.values_list("pk", "archivo"))
         salida = self._cargar("--redibujar")

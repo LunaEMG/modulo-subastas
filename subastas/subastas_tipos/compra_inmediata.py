@@ -5,13 +5,13 @@ from .base import ParametrosSubasta, TipoSubasta
 
 
 class SubastaCompraInmediata(TipoSubasta):
-    """S-07"""
+    """S-07. La descripción recuerda RN-11: quien compra de inmediato gana y tiene 3 días para pagar."""
 
     codigo = "COMPRA_INMEDIATA"
     nombre = "Con compra inmediata"
     descripcion = (
-        "Como la inglesa, con un precio fijo adicional: quien lo paga se queda "
-        "el artículo de inmediato."
+        "Como la inglesa, con un precio fijo adicional: quien lo acepta gana la "
+        "subasta y tiene 3 días para pagarla."
     )
     parametros_propios = ("precio_compra_inmediata",)
 

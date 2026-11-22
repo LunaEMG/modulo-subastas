@@ -1,6 +1,7 @@
 """Todo pasa por los servicios, así que los datos cumplen las reglas y dejan sus avisos.
 Se puede ejecutar varias veces sin duplicar nada."""
 import io
+from pathlib import Path
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand
@@ -29,11 +30,41 @@ PREFIJO = "[Demo]"
 DURACION_DEMO = 72
 
 
+# Fotos reales de demostración (créditos y licencias en fotos_demo/CREDITOS.md).
+FOTOS_DEMO = Path(__file__).resolve().parent / "fotos_demo"
+FOTOS_POR_ARTICULO = {
+    "Reloj de bolsillo": ["reloj-de-bolsillo.jpg"],
+    "Silla ejecutiva": ["silla-ejecutiva.jpg"],
+    "Reloj imitación": ["reloj-imitacion.jpg"],
+    "Consola portátil": ["consola-portatil.jpg"],
+    "Motocicleta 250 cc": ["motocicleta-1.jpg", "motocicleta-2.jpg", "motocicleta-3.jpg"],
+    "Sedán 2015": ["sedan.jpg"],
+    "Reloj cronógrafo": ["cronografo-1.jpg", "cronografo-2.jpg", "cronografo-3.jpg"],
+    "Colección retro": ["coleccion-retro.jpg"],
+    "Escritorio de roble": ["escritorio-de-roble.jpg"],
+    "Lámpara de escritorio": ["lampara-de-escritorio.jpg"],
+}
+# Las ilustraciones se guardan con este nombre; --redibujar solo toca esas.
+NOMBRE_ILUSTRACION = "demo"
+
+
 def _fotografia(titulo: str, color: str) -> SimpleUploadedFile:
     """Ilustración del artículo, generada aquí mismo (sin internet)."""
     contenido = io.BytesIO()
     ilustrar(titulo, color).save(contenido, "PNG", optimize=True)
-    return SimpleUploadedFile("demo.png", contenido.getvalue(), content_type="image/png")
+    return SimpleUploadedFile(
+        f"{NOMBRE_ILUSTRACION}.png", contenido.getvalue(), content_type="image/png"
+    )
+
+
+def _fotografias(titulo: str, color: str) -> list[SimpleUploadedFile]:
+    """Las fotos reales que existan; si no hay ninguna, la ilustración como respaldo."""
+    fotos = [
+        SimpleUploadedFile(nombre, (FOTOS_DEMO / nombre).read_bytes(), content_type="image/jpeg")
+        for nombre in FOTOS_POR_ARTICULO.get(titulo, [])
+        if (FOTOS_DEMO / nombre).is_file()
+    ]
+    return fotos or [_fotografia(titulo, color)]
 
 
 class Command(BaseCommand):
@@ -46,7 +77,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--redibujar",
             action="store_true",
-            help="Vuelve a dibujar las fotografías de los artículos de demostración ya creados.",
+            help="Vuelve a dibujar las ilustraciones de los artículos de demostración ya creados.",
         )
 
     def handle(self, *args, **opciones):
@@ -57,11 +88,14 @@ class Command(BaseCommand):
             self._redibujar()
 
     def _redibujar(self):
-        """Sobrescribe el archivo de cada foto visible; no crea ni borra registros (RNF-01)."""
+        """Sobrescribe el archivo de cada ilustración visible; las fotos reales no se tocan.
+        No crea ni borra registros (RNF-01)."""
         redibujadas = 0
         for articulo in Articulo.objects.filter(titulo__startswith=PREFIJO):
             titulo = articulo.titulo.removeprefix(PREFIJO).strip()
             for foto in articulo.fotografias_visibles:
+                if not Path(foto.archivo.name).name.startswith(NOMBRE_ILUSTRACION):
+                    continue
                 with foto.archivo.open("wb") as archivo:
                     ilustrar(titulo).save(archivo, "PNG", optimize=True)
                 redibujadas += 1
@@ -93,7 +127,7 @@ class Command(BaseCommand):
             descripcion=descripcion,
             anio=anio,
             costo_salida=costo,
-            fotografias=[_fotografia(titulo, color)],
+            fotografias=_fotografias(titulo, color),
         )
 
     def _aprobar(self, articulo):

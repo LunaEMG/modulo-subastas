@@ -1,37 +1,82 @@
 {% extends "subastas/base.html" %}
+{% load presentacion %}
 {% block contenido %}
-<h1>Casa de Subastas</h1>
+{% url 'buscar_subastas' as buscar %}
 {% if not user.is_authenticated %}
-<div class="tarjeta">
+{# Sin sesión no se muestra ninguna subasta: cabecera, categorías, cómo funciona y tipos. #}
+<section class="portada-cabecera">
+  <h1>Casa de Subastas</h1>
   <p>Subastamos automóviles, relojes, videojuegos y artículos de oficina. Para vender o pujar
     necesitas una cuenta y acreditar que vives en México.</p>
   <div class="acciones">
     <a class="boton" href="{% url 'entrar' %}">Entrar</a>
     <a class="boton secundario" href="{% url 'registro' %}">Crear cuenta</a>
   </div>
-</div>
+</section>
+
+{# Cada categoría lleva a Entrar; «next» devuelve al listado ya filtrado después del código. Las tarjetas salen de tarjetas_categoria. #}
+<section class="portada-seccion" aria-labelledby="titulo-categorias">
+  <h2 id="titulo-categorias">Categorías</h2>
+  <p class="entradilla">Entra para ver las subastas abiertas de cada categoría.</p>
+  {% tarjetas_categoria entrar=True %}
+</section>
+
+{# Textos atados a las reglas: RN-15 (residencia), RN-13 (fichas), RN-11 (3 días) y RN-12 (resubasta). #}
+<section class="portada-seccion" aria-labelledby="titulo-como-funciona">
+  <h2 id="titulo-como-funciona">Cómo funciona</h2>
+  <ol class="pasos">
+    <li><span class="numero-paso" aria-hidden="true">1</span><h3>Crea tu cuenta</h3><p>Regístrate como comprador, vendedor o ambos con tu código postal en México. Cada vez que entres te enviaremos un código a tu móvil.</p></li>
+    <li><span class="numero-paso" aria-hidden="true">2</span><h3>Puja en fichas</h3><p>Los precios están en fichas: 1 ficha equivale a 1 peso. Según el tipo de subasta, pujas o aceptas el precio vigente.</p></li>
+    <li><span class="numero-paso" aria-hidden="true">3</span><h3>Paga en 3 días</h3><p>Si ganas, tienes 3 días para pagar. Si el plazo vence sin pago, el artículo se vuelve a subastar.</p></li>
+  </ol>
+</section>
+
+{# Las descripciones son las de subastas_tipos; una prueba RNF-02 comprueba que coincidan. Compra inmediata: RN-11 (3 días para pagar). #}
+<section class="portada-seccion" aria-labelledby="titulo-tipos">
+  <h2 id="titulo-tipos">Tipos de subasta</h2>
+  <dl class="lista-tipos">
+    <div><dt>Inglesa</dt><dd>Los compradores suben el precio; al cierre gana la puja más alta.</dd></div>
+    <div><dt>Holandesa</dt><dd>El precio empieza alto y baja cada cierto tiempo hasta el precio mínimo; gana el primer comprador que acepta el precio vigente.</dd></div>
+    <div><dt>Con precio reservado</dt><dd>Como la inglesa, pero el vendedor fija un precio reservado oculto: si la puja más alta no lo alcanza, el artículo no se vende.</dd></div>
+    <div><dt>Con compra inmediata</dt><dd>Como la inglesa, con un precio fijo adicional: quien lo acepta gana la subasta y tiene 3 días para pagarla.</dd></div>
+  </dl>
+</section>
 {% else %}
-<p>Hola, {{ user.nombre }}. Esto es lo que puedes hacer con tu cuenta:</p>
-<div class="rejilla">
-  <a class="tarjeta tarjeta-enlace" href="{% url 'buscar_subastas' %}">
+<h1>Casa de Subastas</h1>
+<p class="saludo">Hola, {{ user.nombre }}. Esto es lo que puedes hacer con tu cuenta:</p>
+
+{# Píldora de búsqueda: envía «texto» al buscador existente (CU-08). #}
+<form class="buscador-inicio" method="get" action="{{ buscar }}" role="search">
+  <div class="seg-texto"><label for="id_texto_inicio" class="solo-lector">Buscar</label><input type="search" name="texto" id="id_texto_inicio" enterkeyhint="search"></div>
+  <button class="boton boton-buscar" type="submit">Buscar</button>
+</form>
+
+{# Tarjetas por categoría: el buscador filtra la categoría por su nombre. Los chips solo van en el listado. #}
+<nav class="portada-categorias" aria-labelledby="titulo-accesos">
+  <h2 id="titulo-accesos" class="solo-lector">Categorías</h2>
+  {% tarjetas_categoria %}
+</nav>
+
+<div class="rejilla rejilla-roles">
+  <a class="tarjeta tarjeta-enlace tarjeta-rol" href="{% url 'buscar_subastas' %}">
     <h2 class="titulo-tarjeta">Subastas abiertas</h2><p class="suave">Busca artículos y consulta su precio actual.</p></a>
   {% if es_comprador %}
-  <a class="tarjeta tarjeta-enlace" href="{% url 'historial' %}">
+  <a class="tarjeta tarjeta-enlace tarjeta-rol" href="{% url 'historial' %}">
     <h2 class="titulo-tarjeta">Comprador</h2><p class="suave">Tus pujas, sus cambios y las subastas que ganaste.</p>
     {% if pendientes_rol.comprador %}<p class="pendientes-tarjeta"><span class="contador por-atender">{{ pendientes_rol.comprador }}</span> pago{{ pendientes_rol.comprador|pluralize }} pendiente{{ pendientes_rol.comprador|pluralize }}</p>{% else %}<p class="pendientes-tarjeta suave">Sin pendientes.</p>{% endif %}</a>
   {% endif %}
   {% if es_vendedor %}
-  <a class="tarjeta tarjeta-enlace" href="{% url 'mis_articulos' %}">
+  <a class="tarjeta tarjeta-enlace tarjeta-rol" href="{% url 'mis_articulos' %}">
     <h2 class="titulo-tarjeta">Vendedor</h2><p class="suave">Registra artículos, propón subastas y sigue su estado.</p>
     {% if pendientes_rol.vendedor %}<p class="pendientes-tarjeta"><span class="contador por-atender">{{ pendientes_rol.vendedor }}</span> artículo{{ pendientes_rol.vendedor|pluralize }} requiere{{ pendientes_rol.vendedor|pluralize:"n" }} tu acción</p>{% else %}<p class="pendientes-tarjeta suave">Sin pendientes.</p>{% endif %}</a>
   {% endif %}
   {% if es_gestor %}
-  <a class="tarjeta tarjeta-enlace" href="{% url 'gestor_bandeja' %}">
+  <a class="tarjeta tarjeta-enlace tarjeta-rol" href="{% url 'gestor_bandeja' %}">
     <h2 class="titulo-tarjeta">Gestor de Subastas</h2><p class="suave">Revisa artículos y valida las propuestas de subasta.</p>
     {% if pendientes_rol.gestor %}<p class="pendientes-tarjeta"><span class="contador por-atender">{{ pendientes_rol.gestor_articulos }}</span> artículo{{ pendientes_rol.gestor_articulos|pluralize }} por revisar<br><span class="contador por-atender">{{ pendientes_rol.gestor_propuestas }}</span> propuesta{{ pendientes_rol.gestor_propuestas|pluralize }} por validar</p>{% else %}<p class="pendientes-tarjeta suave">Sin pendientes.</p>{% endif %}</a>
   {% endif %}
   {% if es_moderador %}
-  <a class="tarjeta tarjeta-enlace" href="{% url 'moderador_bandeja' %}">
+  <a class="tarjeta tarjeta-enlace tarjeta-rol" href="{% url 'moderador_bandeja' %}">
     <h2 class="titulo-tarjeta">Moderador de Contenido</h2><p class="suave">Revisa descripciones y fotografías, retira publicaciones y aplica sanciones.</p>
     {% if pendientes_rol.moderador %}<p class="pendientes-tarjeta"><span class="contador por-atender">{{ pendientes_rol.moderador }}</span> artículo{{ pendientes_rol.moderador|pluralize }} por revisar</p>{% else %}<p class="pendientes-tarjeta suave">Sin pendientes.</p>{% endif %}</a>
   {% endif %}

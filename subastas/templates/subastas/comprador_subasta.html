@@ -1,77 +1,100 @@
 {% extends "subastas/base.html" %}
-{% load humanize %}
+{% load humanize presentacion %}
 {% block titulo %}{{ articulo.titulo }} · Casa de Subastas{% endblock %}
 {% block contenido %}
-<p><a href="{% url 'buscar_subastas' %}">← Subastas abiertas</a></p>
-<h1>{{ articulo.titulo }}</h1>
-<div class="dos-columnas ficha-subasta">
-  <div class="tarjeta panel-compra">
-    <p><span class="etiqueta">{{ tipo.nombre }}</span> {% if abierta %}<span class="sello sello-en-curso">Abierta</span>{% else %}{% include "subastas/_estado_subasta.html" %}{% endif %}</p>
-    <p class="suave">{{ tipo.descripcion }}</p>
-    <p class="suave sin-margen">{% if subasta.tipo == 'HOLANDESA' %}Precio vigente{% else %}Precio actual{% endif %}</p>
-    <p class="precio">{{ precio_actual|intcomma }} <span class="unidad">ficha{{ precio_actual|pluralize }}</span></p>
-    <dl class="datos">
-      <dt>Precio de salida</dt><dd>{{ subasta.precio_salida|intcomma }} ficha{{ subasta.precio_salida|pluralize }}</dd>
-      {% if subasta.tipo != 'HOLANDESA' %}<dt>Pujas activas</dt><dd>{{ numero_pujas|intcomma }}</dd>{% endif %}
-      {% if subasta.tipo == 'RESERVADA' %}<dt>Precio reservado</dt><dd>{% if reserva_alcanzada %}<span class="sello sello-en-curso">Alcanzado</span>{% else %}<span class="sello sello-pendiente">Aún no se alcanza</span>{% endif %}</dd>{% endif %}
-      {% if proxima_bajada %}<dt>Próxima bajada</dt><dd>{{ proxima_bajada|date:"d/m/Y H:i" }} (−{{ subasta.holandesa_decremento|intcomma }})</dd>{% endif %}
-      {% if subasta.fecha_cierre %}<dt>Cierre</dt><dd>{{ subasta.fecha_cierre|date:"d/m/Y H:i" }}</dd>{% endif %}
-      {% if mi_puja %}<dt>Tu puja</dt><dd>{{ mi_puja.monto|intcomma }} ficha{{ mi_puja.monto|pluralize }}{% if abierta %} {% if soy_lider %}<span class="sello sello-ganando">Vas ganando</span>{% else %}<span class="sello sello-superado">Te superaron</span>{% endif %}{% endif %}</dd>{% endif %}
-      {% if adjudicacion %}<dt>Precio final</dt><dd>{{ adjudicacion.precio_final|intcomma }} ficha{{ adjudicacion.precio_final|pluralize }}{% if adjudicacion.ganador == user %} <span class="sello sello-definitivo sello-ganaste">Ganaste</span>{% endif %}</dd>{% endif %}
-    </dl>
+<p class="migas"><a href="{% url 'buscar_subastas' %}">← Subastas abiertas</a></p>
+{# Ficha abierta: título → foto → caja de compra en el teléfono; foto a la izquierda y columna fija a la derecha desde 880 px. #}
+<div class="ficha-subasta cat-{{ articulo.categoria.nombre|slugify }}">
+  <div class="cabecera-ficha">
+    <h1>{{ articulo.titulo }}</h1>
+    <p class="chips-ficha"><span class="etiqueta">{{ tipo.nombre }}</span> {% if abierta %}<span class="sello sello-en-curso">Abierta</span>{% else %}{% include "subastas/_estado_subasta.html" %}{% endif %}</p>
+  </div>
+  <div class="ficha-galeria">{% include "subastas/_fotografias.html" %}</div>
+  <div class="panel-compra">
+    <div class="caja-compra">
+      {% with cierre=subasta.fecha_cierre %}
+      <div class="fila-precio">
+        <div>
+          <p class="precio-rotulo suave">{% if subasta.tipo == 'HOLANDESA' %}Precio vigente{% else %}Precio actual{% endif %}</p>
+          <p class="precio">{{ precio_actual|intcomma }} <span class="unidad">ficha{{ precio_actual|pluralize }}</span></p>
+        </div>
+        {% if abierta and cierre|tiempo_restante %}<time class="tiempo{% if cierre|es_urgente %} urgente{% endif %}" datetime="{{ cierre|date:'c' }}">{{ cierre|tiempo_restante }}</time>{% endif %}
+      </div>
+      {% endwith %}
 
-    {% if abierta and es_comprador and not es_su_vendedor %}
-      {% if subasta.tipo == 'HOLANDESA' %}
-        <div class="separado">
-          <a class="boton" href="{% url 'confirmar_aceptar_holandesa' subasta.pk %}">Aceptar {{ precio_en_el_acto|intcomma }} fichas</a>
+      {# Franja de situación: lo que más le importa al comprador, justo bajo el precio. #}
+      {% if mi_puja and abierta %}
+      <dl class="mi-situacion {% if soy_lider %}situacion-ganando{% else %}situacion-superado{% endif %}">
+        <dt>Tu puja</dt><dd>{{ mi_puja.monto|intcomma }} ficha{{ mi_puja.monto|pluralize }} {% if soy_lider %}<span class="sello sello-ganando">Vas ganando</span>{% else %}<span class="sello sello-superado">Te superaron</span>{% endif %}</dd>
+      </dl>
+      {% elif adjudicacion and adjudicacion.ganador == user %}
+      <dl class="mi-situacion situacion-ganaste">
+        <dt>Precio final</dt><dd>{{ adjudicacion.precio_final|intcomma }} ficha{{ adjudicacion.precio_final|pluralize }} <span class="sello sello-definitivo sello-ganaste">Ganaste</span></dd>
+      </dl>
+      {% endif %}
+
+      {% if abierta and es_comprador and not es_su_vendedor %}
+        {% if subasta.tipo == 'HOLANDESA' %}
+        <div class="accion-holandesa">
+          <a class="boton boton-ancho" href="{% url 'confirmar_aceptar_holandesa' subasta.pk %}">Aceptar {{ precio_en_el_acto|intcomma }} fichas</a>
           <span class="ayuda">Gana el primero que acepta. Es definitivo.</span>
         </div>
-      {% else %}
-        {% if mi_puja %}
-        {% if puja_al_tope %}
-        <p class="suave separado">La oferta llegó al máximo de fichas que admite el sistema: ya no se puede subir.</p>
         {% else %}
-        <form method="post" action="{% url 'modificar_puja' subasta.pk %}#puja" class="separado" id="puja" novalidate>{% csrf_token %}
-          <label for="id_monto">Nuevo monto (fichas)</label>
-          {% if formulario.monto.errors %}<ul class="errorlist" id="error-monto">{% for e in formulario.monto.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          <div class="en-linea"><div>{{ formulario.monto }}</div><button class="boton" type="submit">Modificar puja</button></div>
-          <span class="ayuda" id="ayuda-monto">Debe ser mayor a la oferta actual y a tu puja anterior. Mínimo {{ puja_minima|intcomma }} fichas.</span>
-        </form>
+          {% if puja_al_tope %}
+          <p class="nota">La oferta llegó al máximo de fichas que admite el sistema: ya no se puede subir.</p>
+          {% elif mi_puja %}
+          <form method="post" action="{% url 'modificar_puja' subasta.pk %}#puja" class="accion-puja" id="puja" novalidate>{% csrf_token %}
+            <label for="id_monto">Nuevo monto (fichas)</label>
+            {% if formulario.monto.errors %}<ul class="errorlist" id="error-monto">{% for e in formulario.monto.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            <div class="fila-monto"><div>{{ formulario.monto }}</div><button class="boton" type="submit">Modificar puja</button></div>
+            <span class="ayuda" id="ayuda-monto">Debe ser mayor a la oferta actual y a tu puja anterior. Mínimo {{ puja_minima|intcomma }} fichas.</span>
+          </form>
+          {% else %}
+          <form method="post" action="{% url 'pujar' subasta.pk %}#puja" class="accion-puja" id="puja" novalidate>{% csrf_token %}
+            <label for="id_monto">Tu puja (fichas)</label>
+            {% if formulario.monto.errors %}<ul class="errorlist" id="error-monto">{% for e in formulario.monto.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            <div class="fila-monto"><div>{{ formulario.monto }}</div><button class="boton" type="submit">Pujar</button></div>
+            <span class="ayuda" id="ayuda-monto">Mínimo {{ puja_minima|intcomma }} fichas.</span>
+          </form>
+          {% endif %}
+          {% if precio_en_el_acto %}
+          <a class="boton secundario boton-ancho-sec" href="{% url 'confirmar_compra_inmediata' subasta.pk %}">Comprar ya por {{ precio_en_el_acto|intcomma }} fichas</a>
+          {% endif %}
+          {% if mi_puja %}
+          <form method="post" action="{% url 'retirar_puja' subasta.pk %}" class="retirar">{% csrf_token %}
+            <button class="boton boton-texto" type="submit">Retirar mi puja</button>
+          </form>
+          {% endif %}
         {% endif %}
-        <form method="post" action="{% url 'retirar_puja' subasta.pk %}" class="separado-sm">{% csrf_token %}
-          <button class="boton secundario" type="submit">Retirar mi puja</button>
-        </form>
-        {% elif puja_al_tope %}
-        <p class="suave separado">La oferta llegó al máximo de fichas que admite el sistema: ya no se puede subir.</p>
-        {% else %}
-        <form method="post" action="{% url 'pujar' subasta.pk %}#puja" class="separado" id="puja" novalidate>{% csrf_token %}
-          <label for="id_monto">Tu puja (fichas)</label>
-          {% if formulario.monto.errors %}<ul class="errorlist" id="error-monto">{% for e in formulario.monto.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          <div class="en-linea"><div>{{ formulario.monto }}</div><button class="boton" type="submit">Pujar</button></div>
-          <span class="ayuda" id="ayuda-monto">Mínimo {{ puja_minima|intcomma }} fichas.</span>
-        </form>
-        {% endif %}
-        {% if precio_en_el_acto %}
-        <div class="compra-inmediata">
-          <a class="boton secundario" href="{% url 'confirmar_compra_inmediata' subasta.pk %}">Comprar ya por {{ precio_en_el_acto|intcomma }} fichas</a>
-        </div>
-        {% endif %}
+      {% elif abierta and es_su_vendedor %}
+        <p class="nota">Es tu subasta: no puedes pujar en ella.</p>
+      {% elif abierta %}
+        <p class="nota">Solo los compradores pueden pujar.</p>
       {% endif %}
-    {% elif abierta and es_su_vendedor %}
-      <p class="suave">Es tu subasta: no puedes pujar en ella.</p>
-    {% elif abierta %}
-      <p class="suave">Solo los compradores pueden pujar.</p>
-    {% endif %}
+
+      {# Las cifras de la subasta, en fila. #}
+      <dl class="cifras">
+        <div><dt>Precio de salida</dt><dd>{{ subasta.precio_salida|intcomma }} ficha{{ subasta.precio_salida|pluralize }}</dd></div>
+        {% if subasta.tipo != 'HOLANDESA' %}<div><dt>Pujas activas</dt><dd>{{ numero_pujas|intcomma }}</dd></div>{% endif %}
+        {% if subasta.tipo == 'RESERVADA' %}<div><dt>Precio reservado</dt><dd>{% if reserva_alcanzada %}<span class="sello sello-en-curso">Alcanzado</span>{% else %}<span class="sello sello-pendiente">Aún no se alcanza</span>{% endif %}</dd></div>{% endif %}
+        {% if proxima_bajada %}<div><dt>Próxima bajada</dt><dd>{{ proxima_bajada|date:"d/m/Y H:i" }} (−{{ subasta.holandesa_decremento|intcomma }})</dd></div>{% endif %}
+        {% if subasta.fecha_cierre %}<div><dt>Cierre</dt><dd>{{ subasta.fecha_cierre|date:"d/m/Y H:i" }}</dd></div>{% endif %}
+        {% if mi_puja and not abierta %}<div><dt>Tu puja</dt><dd>{{ mi_puja.monto|intcomma }} ficha{{ mi_puja.monto|pluralize }}</dd></div>{% endif %}
+        {% if adjudicacion and adjudicacion.ganador != user %}<div><dt>Precio final</dt><dd>{{ adjudicacion.precio_final|intcomma }} ficha{{ adjudicacion.precio_final|pluralize }}</dd></div>{% endif %}
+      </dl>
+    </div>
+    <div class="info-tipo"><p><strong>{{ tipo.nombre }}</strong> {{ tipo.descripcion }}</p></div>
   </div>
-  <div class="tarjeta panel-articulo">
-    {% include "subastas/_fotografias.html" %}
-    <h2>Descripción</h2>
-    <p>{{ articulo.descripcion|linebreaksbr }}</p>
-    <dl class="datos">
+</div>
+<section class="detalles-articulo">
+  <h2>Descripción</h2>
+  <div class="detalles-rejilla">
+    <dl class="datos-articulo">
       <dt>Artículo</dt><dd>#{{ articulo.pk }}</dd>
       <dt>Categoría</dt><dd>{{ articulo.categoria }}</dd>
       <dt>Año</dt><dd>{{ articulo.anio }}</dd>
     </dl>
+    <p>{{ articulo.descripcion|linebreaksbr }}</p>
   </div>
-</div>
+</section>
 {% endblock %}
