@@ -525,15 +525,11 @@ class RNF02ChipsDeCategoria(PruebaSubastas):
         usos = re.findall(r"([^{}]+)\{[^}]*var\(--prof-cat\)", sin_comentarios)
         self.assertEqual([u.strip() for u in usos], [".chip-categoria", ".tarjeta-categoria"])
 
-    def test_rnf_02_el_zoom_de_la_tarjeta_respeta_el_movimiento_reducido(self):
-        """RNF-02 El zoom de la foto (1.03 en 200 ms) solo existe dentro de prefers-reduced-motion: no-preference."""
+    def test_rnf_02_la_tarjeta_de_categoria_no_crece_al_pasar_el_cursor(self):
+        """RNF-02 Al pasar el cursor por una tarjeta de categoría solo aparece un borde; la foto no se escala."""
         css = hoja_de_estilos()
-        bloque = re.search(r"@media \(hover: hover\) and \(pointer: fine\) and \(prefers-reduced-motion: no-preference\) \{(.*?)\n\}", css, re.S)
-        self.assertIsNotNone(bloque)
-        self.assertIn("transition: transform 200ms", bloque.group(1))
-        self.assertIn(".tarjeta-categoria:hover img { transform: scale(1.03); }", bloque.group(1))
-        fuera = css.replace(bloque.group(0), "")
-        self.assertNotIn("scale(1.03)", fuera)
+        self.assertNotIn("scale(", css)
+        self.assertIn(".tarjeta-categoria:hover { box-shadow: 0 0 0 2px var(--borde-campo); }", css)
 
     def test_rnf_02_el_nombre_del_chip_no_se_parte(self):
         """RNF-02 El nombre de un chip del listado («Artículos de oficina») no se parte en dos líneas."""

@@ -14,7 +14,7 @@
         <td class="celda-principal"><a href="{% url 'gestor_articulo' articulo.pk %}">{{ articulo.titulo }}</a><br><span class="suave">#{{ articulo.pk }} · {{ articulo.fecha_registro|date:"d/m/Y H:i" }}</span></td>
         <td data-etiqueta="Vendedor">{{ articulo.vendedor }}</td>
         <td data-etiqueta="Categoría">{{ articulo.categoria }}{% if articulo.categoria.requiere_valuacion %} <span class="suave">(pasa al valuador)</span>{% endif %}</td>
-        <td class="numero" data-etiqueta="Costo de salida">{{ articulo.costo_salida|intcomma }}</td>
+        <td class="numero" data-etiqueta="Costo de salida">{{ articulo.costo_salida|intcomma }} ficha{{ articulo.costo_salida|pluralize }}</td>
       </tr>
     {% endfor %}
     </tbody>

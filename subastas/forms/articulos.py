@@ -33,7 +33,10 @@ class FormularioArticulo(FormularioConCatalogo):
     """Lo obligatorio (RN-02) lo decide la regla, no el formulario."""
 
     categoria = forms.ModelChoiceField(
-        label="Categoría", queryset=Categoria.objects.all(), to_field_name="nombre"
+        label="Categoría",
+        queryset=Categoria.objects.all(),
+        to_field_name="nombre",
+        empty_label="Elige una categoría",
     )
     titulo = forms.CharField(label="Título", max_length=120)
     descripcion = forms.CharField(label="Descripción", widget=forms.Textarea, required=False)
