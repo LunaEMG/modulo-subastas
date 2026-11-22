@@ -1,6 +1,7 @@
 """El precio actual se lee dentro de la transacción: con IMMEDIATE (settings.py), si dos
 compradores pujan a la vez el segundo espera y ve el precio que dejó el primero."""
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 from .. import eventos, reloj
 from .. import subastas_tipos as tipos
@@ -12,7 +13,7 @@ from . import cierre, consultas, cuentas
 
 
 def _subasta(subasta_id: int) -> Subasta:
-    return Subasta.objects.select_related("articulo__vendedor").get(pk=subasta_id)
+    return get_object_or_404(Subasta.objects.select_related("articulo__vendedor"), pk=subasta_id)
 
 
 def _exigir_abierta(subasta: Subasta) -> None:

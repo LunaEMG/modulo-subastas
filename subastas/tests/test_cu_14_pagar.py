@@ -86,3 +86,14 @@ class CU14Pagar(PruebaSubastas):
         self.assertEqual(consultas.pendientes_por_rol(self.comprador), {"comprador": 1})
         self.assertContains(respuesta, 'class="contador por-atender">1<', count=2)
         self.assertContains(respuesta, "pago pendiente")
+
+    def test_ca_14_4_y_ca_05_3_un_id_inexistente_responde_404(self):
+        """CA-14.4 y CA-05.3 Una adjudicación, subasta o artículo que no existe responde 404, no un error
+        del servidor; lo ajeno sigue rechazándose con ERR-43."""
+        self.assertEqual(self.client.post(reverse("pagar", args=[999999])).status_code, 404)
+        self.assertEqual(self.client.post(reverse("pujar", args=[999999]), {"monto": 5000}).status_code, 404)
+        self.client.force_login(self.vendedor)
+        self.assertEqual(self.client.get(reverse("detalle_articulo", args=[999999])).status_code, 404)
+        self.client.force_login(self.crear_vendedor())
+        ajeno = self.client.get(reverse("detalle_articulo", args=[self.subasta.articulo_id]), follow=True)
+        self.assertContains(ajeno, "ERR-43")

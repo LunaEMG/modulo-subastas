@@ -2,11 +2,25 @@ from urllib.parse import urlparse
 
 from django.contrib.auth import logout
 from django.shortcuts import redirect
+from django.utils.cache import add_never_cache_headers
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from .mensajes import ErrorDeNegocio
 from .servicios import cierre, cuentas
 from .views.comunes import avisar_error
+
+
+class SinCacheConSesionMiddleware:
+    """S-35: con sesión abierta, el navegador no guarda las páginas; tras «Salir», «Atrás» no las muestra."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        respuesta = self.get_response(request)
+        if request.user.is_authenticated:
+            add_never_cache_headers(respuesta)
+        return respuesta
 
 
 class ProcesoDelTiempoMiddleware:

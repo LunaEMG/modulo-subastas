@@ -2,6 +2,7 @@
 from django.urls import reverse
 
 from subastas import reloj
+from subastas.servicios import pujas
 
 from .base import PruebaSubastas, fotografia
 
@@ -105,3 +106,23 @@ class CU08BuscarSubastas(PruebaSubastas):
         respuesta = self.client.get(reverse("buscar_subastas"))
         self.assertContains(respuesta, 'class="tiempo urgente"', count=1)
         self.assertContains(respuesta, ">quedan 22 h 0 min</time>", html=False)
+
+    def test_s_36_el_detalle_solo_muestra_subastas_abiertas_o_propias(self):
+        """S-36 Una subasta sin publicar o un id inexistente responden 404. Cerrada, la siguen viendo
+        quien pujó, el ganador y el vendedor, pero no otro comprador."""
+        articulo = self.articulo_listo()
+        propuesta = self.proponer(articulo)
+        self.assertEqual(self.client.get(reverse("detalle_subasta", args=[propuesta.pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("detalle_subasta", args=[999999])).status_code, 404)
+
+        comprador = self.crear_comprador()
+        pujas.pujar(comprador=comprador, subasta_id=self.subasta.pk, monto=1500)
+        self.reloj.avanzar(hours=25)
+        self.client.get(reverse("inicio"))  # El actor Tiempo cierra la subasta.
+        detalle = reverse("detalle_subasta", args=[self.subasta.pk])
+        self.assertEqual(self.client.get(detalle).status_code, 404)
+        self.client.force_login(comprador)
+        self.assertContains(self.client.get(reverse("historial")), detalle)
+        self.assertEqual(self.client.get(detalle).status_code, 200)
+        self.client.force_login(self.vendedor)
+        self.assertEqual(self.client.get(detalle).status_code, 200)
