@@ -31,10 +31,11 @@
     </div>
     {% else %}<p class="vacio">Sin sanciones.</p>{% endif %}
   </div>
+  {% if sancionable %}
   <div class="tarjeta">
-    <h2>Aplicar sanción (CU-20)</h2>
+    <h2>Aplicar sanción</h2>
     {% if nivel %}
-    <p>Las sanciones son escalonadas (RN-16): la siguiente es de <strong>nivel {{ nivel }}</strong>.
+    <p>Las sanciones son escalonadas: la siguiente es de <strong>nivel {{ nivel }}</strong>.
       {% if nivel == 1 %}Suspensión de 14 días.{% elif nivel == 2 %}Suspensión de 90 días.{% else %}Baja definitiva.{% endif %}</p>
     <form method="post" action="{% url 'confirmar_sancion' sancionado.pk %}" novalidate>{% csrf_token %}
       <input type="hidden" name="nivel" value="{{ nivel }}">
@@ -46,5 +47,6 @@
     <p class="vacio vacio-definitivo">El usuario ya fue dado de baja de forma definitiva.</p>
     {% endif %}
   </div>
+  {% endif %}
 </div>
 {% endblock %}

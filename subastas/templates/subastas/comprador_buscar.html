@@ -49,6 +49,6 @@
   {% endfor %}
 </div>
 {% else %}
-<p class="vacio vacio-busqueda">No hay subastas abiertas con esos filtros.</p>
+<p class="vacio vacio-busqueda">No hay subastas abiertas con esos filtros.{% if filtros %} <a href="{% url 'buscar_subastas' %}">Limpiar filtros</a>{% endif %}</p>
 {% endif %}
 {% endblock %}

@@ -3,12 +3,15 @@ import os
 import re
 from html import unescape
 from datetime import timedelta
+from unittest import mock
 from urllib.parse import parse_qs, quote
 
 from django.contrib.staticfiles import finders
 from django.template import Context, Template
+from django.test import Client, RequestFactory, override_settings
 from django.urls import reverse
 from django.utils.text import slugify
+from django.views.defaults import server_error
 
 from subastas import reloj, subastas_tipos as tipos
 from subastas.models import Categoria
@@ -291,7 +294,7 @@ class RNF02Iconos(PruebaSubastas):
         self.assertNotIn("data:image/svg", css)
 
     def test_rnf_02_el_menu_lleva_el_icono_de_cada_destino(self):
-        """RNF-02 Cada enlace del menú lleva la clase de su ícono: sin sesión Entrar y Registrarse (en la portada, Entrar y el botón «Crear cuenta»); con sesión los de su rol."""
+        """RNF-02 Cada enlace del menú lleva la clase de su ícono: sin sesión Entrar y Crear cuenta (en la portada, Entrar y el botón «Crear cuenta»); con sesión los de su rol."""
         html = self.client.get(reverse("entrar")).content.decode()
         self.assertIn('class="ir-entrar" href="{}"'.format(reverse("entrar")), html)
         self.assertIn('class="ir-registro" href="{}"'.format(reverse("registro")), html)
@@ -611,10 +614,35 @@ class RNF02BandaDeEncabezado(PruebaSubastas):
         self.assertIn('<p class="migas"><a href="{}">← Pendientes</a></p>'.format(reverse("gestor_bandeja")), revisar)
         infractor = self.crear_comprador()
         self.client.force_login(moderador)
-        self.assertIn("<h1>Moderación de contenido</h1>", banda(self.client.get(reverse("moderador_bandeja")).content.decode()))
+        self.assertIn("<h1>Moderación</h1>", banda(self.client.get(reverse("moderador_bandeja")).content.decode()))
         self.assertIn("<h1>Reloj de prueba</h1>", banda(self.client.get(reverse("moderador_articulo", args=[articulo.pk])).content.decode()))
         self.assertIn("<h1>Comprador de prueba</h1>", banda(self.client.get(reverse("moderador_usuario", args=[infractor.pk])).content.decode()))
         confirmacion = self.client.post(reverse("confirmar_sancion", args=[infractor.pk]), {"motivo": "Spam", "nivel": "1"})
         html = banda(confirmacion.content.decode())
         self.assertIn("<h1>Revisa y confirma</h1>", html)
         self.assertIn("<strong>Comprador de prueba</strong>", html)
+
+
+class RNF02PaginasDeError(PruebaSubastas):
+    @override_settings(DEBUG=False)
+    def test_rnf_02_la_404_es_propia_con_banda_y_enlace_a_inicio(self):
+        """RNF-02 Una dirección que no existe muestra la 404 propia, en español, con banda y enlace al inicio."""
+        respuesta = self.client.get("/no-existe/")
+        self.assertEqual(respuesta.status_code, 404)
+        self.assertTemplateUsed(respuesta, "404.html")
+        self.assertIn("<h1>Página no encontrada</h1>", banda(respuesta.content.decode()))
+        self.assertContains(respuesta, f'<a href="{reverse("inicio")}">Ir al inicio</a>', status_code=404)
+
+    @override_settings(DEBUG=False)
+    def test_rnf_02_la_500_es_autonoma(self):
+        """RNF-02 Un error del servidor muestra la 500 propia, que se pinta sin procesadores de contexto ni base de datos, con los mismos estilos."""
+        cliente = Client(raise_request_exception=False)
+        with mock.patch("subastas.views.general.render", side_effect=RuntimeError("falla simulada")):
+            respuesta = cliente.get(reverse("inicio"))
+        html = respuesta.content.decode()
+        self.assertEqual(respuesta.status_code, 500)
+        self.assertIn("<h1>Algo salió mal</h1>", html)
+        self.assertIn("subastas/estilos.css", html)
+        self.assertIn('<a href="/">Ir al inicio</a>', html)
+        with self.assertNumQueries(0):
+            server_error(RequestFactory().get("/"))

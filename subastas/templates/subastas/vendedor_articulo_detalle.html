@@ -17,6 +17,7 @@
 </header>
 {% endblock %}
 {% block contenido %}
+{% if articulo.estado == "DURACION_PROPUESTA" %}<p class="nota">Tu propuesta la revisa primero el moderador y después el gestor.</p>{% endif %}
 <div class="dos-columnas">
   <div>
     <div class="tarjeta">
@@ -31,11 +32,11 @@
       <div class="tarjeta">
         <p><strong>{{ fila.tipo.nombre }}</strong> · {% include "subastas/_estado_subasta.html" with subasta=s %}</p>
         <dl class="datos">
-          <dt>Duración</dt><dd>{{ s.duracion_horas }} horas</dd>
+          <dt>Duración</dt><dd>{{ s.duracion_horas }} hora{{ s.duracion_horas|pluralize }}</dd>
           <dt>Precio de salida</dt><dd>{{ s.precio_salida|intcomma }} fichas</dd>
           {% if s.precio_reserva %}<dt>Precio reservado</dt><dd>{{ s.precio_reserva|intcomma }} fichas</dd>{% endif %}
           {% if s.precio_compra_inmediata %}<dt>Compra inmediata</dt><dd>{{ s.precio_compra_inmediata|intcomma }} fichas</dd>{% endif %}
-          {% if s.holandesa_precio_inicial %}<dt>Holandesa</dt><dd>desde {{ s.holandesa_precio_inicial|intcomma }}, baja {{ s.holandesa_decremento|intcomma }} cada {{ s.holandesa_intervalo_min }} min</dd>{% endif %}
+          {% if s.holandesa_precio_inicial %}<dt>Holandesa</dt><dd>desde {{ s.holandesa_precio_inicial|intcomma }} fichas, baja {{ s.holandesa_decremento|intcomma }} ficha{{ s.holandesa_decremento|pluralize }} cada {{ s.holandesa_intervalo_min }} min</dd>{% endif %}
           {% if s.fecha_cierre %}<dt>Cierre</dt><dd>{{ s.fecha_cierre|date:"d/m/Y H:i" }}</dd>{% endif %}
           {% if fila.precio_actual %}<dt>Precio actual</dt><dd>{{ fila.precio_actual|intcomma }} fichas</dd>{% endif %}
           {% if fila.adjudicacion %}{% with a=fila.adjudicacion %}

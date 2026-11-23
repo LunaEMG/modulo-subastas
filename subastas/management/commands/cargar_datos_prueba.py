@@ -4,7 +4,8 @@ import io
 from pathlib import Path
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.management.base import BaseCommand
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from subastas.models import Articulo, Rol, Usuario
@@ -81,6 +82,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **opciones):
+        # Los usuarios de prueba comparten una contraseña conocida: solo en desarrollo o en las pruebas.
+        if not settings.DEBUG and not settings.EJECUTANDO_PRUEBAS:
+            raise CommandError(
+                "cargar_datos_prueba solo corre con DEBUG=1, porque crea usuarios con una contraseña "
+                "conocida. Revisa la sección «Instalación» del README."
+            )
         self._crear_usuarios()
         if not opciones["solo_usuarios"]:
             self._crear_articulos()

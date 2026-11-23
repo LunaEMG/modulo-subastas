@@ -19,7 +19,7 @@
     {% for a in ganadas %}
       <tr>
         <td class="celda-principal"><a href="{% url 'detalle_subasta' a.subasta.pk %}">{{ a.subasta.articulo.titulo }}</a></td>
-        <td class="numero" data-etiqueta="Precio final">{{ a.precio_final|intcomma }}</td>
+        <td class="numero" data-etiqueta="Precio final">{{ a.precio_final|intcomma }} ficha{{ a.precio_final|pluralize }}</td>
         <td data-etiqueta="Pago">{{ a.get_estado_display }}{% if a.estado == 'PENDIENTE_PAGO' %}<br><span class="suave">límite {{ a.fecha_limite_pago|date:"d/m/Y H:i" }}</span>{% endif %}</td>
         <td class="celda-accion">{% if a.estado == 'PENDIENTE_PAGO' %}
           <a class="boton" href="{% url 'confirmar_pago' a.pk %}">Pagar {{ a.precio_final|intcomma }} fichas</a>
@@ -37,17 +37,17 @@
 <div class="tarjeta">
   <p><a href="{% url 'detalle_subasta' p.subasta.pk %}"><strong>{{ p.subasta.articulo.titulo }}</strong></a>
     <span class="etiqueta">{{ fila.tipo.nombre }}</span>
-    <span class="sello {% if p.estado != 'ACTIVA' %}sello-detenido{% elif fila.abierta %}sello-en-curso{% else %}sello-definitivo{% endif %}">{{ p.get_estado_display }}</span>
+    <span class="sello {% if p.estado != 'ACTIVA' %}sello-detenido{% elif fila.abierta %}sello-en-curso{% elif fila.estado == 'Ganadora' %}sello-definitivo sello-ganaste{% else %}sello-definitivo{% endif %}">{{ fila.estado }}</span>
     {% if p.estado == 'ACTIVA' and fila.abierta %}{% if fila.soy_lider %}<span class="sello sello-ganando">Vas ganando</span>{% else %}<span class="sello sello-superado">Te superaron</span>{% endif %}{% endif %}
-    {% if fila.abierta %}<span class="suave sin-cortar">· precio actual {{ fila.precio_actual|intcomma }}</span>{% else %}<span class="suave sin-cortar">· subasta cerrada</span>{% endif %}</p>
+    {% if fila.abierta %}<span class="suave sin-cortar">· precio actual {{ fila.precio_actual|intcomma }} ficha{{ fila.precio_actual|pluralize }}</span>{% else %}<span class="suave sin-cortar">· subasta cerrada</span>{% endif %}</p>
   <div class="tabla-caja">
     <table class="apilada">
       <thead><tr><th>Fecha</th><th>Movimiento</th><th class="numero">Antes</th><th class="numero">Después</th></tr></thead>
       <tbody>
       {% for m in p.movimientos.all %}
         <tr><td class="celda-principal">{{ m.fecha|date:"d/m/Y H:i" }}</td><td data-etiqueta="Movimiento">{{ m.get_tipo_display }}</td>
-          <td class="numero" data-etiqueta="Antes">{{ m.monto_anterior|default_if_none:"—"|intcomma }}</td>
-          <td class="numero" data-etiqueta="Después">{{ m.monto_nuevo|default_if_none:"—"|intcomma }}</td></tr>
+          <td class="numero" data-etiqueta="Antes">{% if m.monto_anterior is not None %}{{ m.monto_anterior|intcomma }} ficha{{ m.monto_anterior|pluralize }}{% else %}—{% endif %}</td>
+          <td class="numero" data-etiqueta="Después">{% if m.monto_nuevo is not None %}{{ m.monto_nuevo|intcomma }} ficha{{ m.monto_nuevo|pluralize }}{% else %}—{% endif %}</td></tr>
       {% endfor %}
       </tbody>
     </table>

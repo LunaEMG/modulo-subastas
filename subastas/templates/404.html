@@ -1,0 +1,13 @@
+{% extends "subastas/base.html" %}
+{% block titulo %}Página no encontrada · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda">
+  <div class="banda-texto">
+    <h1>Página no encontrada</h1>
+    <p class="banda-contexto">La dirección no existe o ya no está disponible.</p>
+  </div>
+</header>
+{% endblock %}
+{% block contenido %}
+<p class="vacio">Revisa la dirección o vuelve a empezar desde el inicio. <a href="{% url 'inicio' %}">Ir al inicio</a></p>
+{% endblock %}

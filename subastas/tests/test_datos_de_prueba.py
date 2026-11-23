@@ -4,7 +4,7 @@ from io import StringIO
 from pathlib import Path
 from unittest import mock
 
-from django.core.management import call_command
+from django.core.management import CommandError, call_command
 from django.test import TestCase, override_settings
 
 from subastas import integraciones, reloj
@@ -107,3 +107,9 @@ class CargarDatosDePrueba(TestCase):
         self.assertIn(f"Fotografías redibujadas: {len(antes)}", salida)
         self.assertEqual(list(Fotografia.objects.values_list("pk", "archivo")), antes)
 
+    def test_sin_debug_y_fuera_de_las_pruebas_se_niega_a_correr(self):
+        """Con DEBUG apagado (y sin estar en las pruebas) no crea nada y remite al README."""
+        with override_settings(DEBUG=False, EJECUTANDO_PRUEBAS=False):
+            with self.assertRaisesMessage(CommandError, "README"):
+                self._cargar()
+        self.assertFalse(Usuario.objects.exists())

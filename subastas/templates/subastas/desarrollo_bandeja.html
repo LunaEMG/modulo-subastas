@@ -1,13 +1,15 @@
 {% extends "subastas/base.html" %}
+{% load presentacion %}
 {% block titulo %}Bandeja simulada · Casa de Subastas{% endblock %}
 {% block contenido %}
+<p class="migas"><a href="{% url 'inicio' %}">← Inicio</a></p>
 <h1>Bandeja simulada</h1>
 <p class="suave">Aquí aparecen los SMS y correos que los simuladores «enviaron». Esta página solo
   existe en modo de desarrollo; cuando se conecten los servicios reales deja de usarse.</p>
 {% for envio in envios %}
 <div class="tarjeta">
   <p><span class="etiqueta">{{ envio.canal }}</span> para <strong>{{ envio.destino }}</strong>
-    <span class="suave">· {{ envio.fecha }}</span></p>
+    <span class="suave">· {{ envio.fecha|fecha_completa }}</span></p>
   <h2 class="titulo-tarjeta">{{ envio.asunto }}</h2>
   <pre class="envio">{{ envio.cuerpo }}</pre>
 </div>

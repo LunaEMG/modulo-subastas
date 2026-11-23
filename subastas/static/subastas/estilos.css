@@ -332,7 +332,7 @@ form div > .opcion-tipo, .opcion-tipo {
 }
 /* Solo donde el sello puede quedarse sin espacio (una fila apilada, un dato de la ficha) se permite
    partir su texto, y únicamente si no cabe ni en una línea entera; en tablas anchas sigue en una línea. */
-.sello-largo, table.apilada .solo-movil .sello { white-space: normal; max-width: 100%; text-wrap: balance; }
+table.apilada .solo-movil .sello { white-space: normal; max-width: 100%; text-wrap: balance; }
 .sello-en-curso { color: var(--oro-texto); }
 .sello-pendiente { color: var(--texto-suave); border-style: dashed; }
 .sello-definitivo { background: var(--texto); border-color: var(--texto); color: var(--sobre-oscuro); }

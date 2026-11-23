@@ -7,7 +7,7 @@ from .. import reloj
 from .. import subastas_tipos as tipos
 from ..forms.articulos import FormularioBusqueda, FormularioMonto
 from ..mensajes import ErrorDeNegocio
-from ..models import Adjudicacion, Rol, Subasta
+from ..models import Adjudicacion, Puja, Rol, Subasta
 from ..reglas.pagos import DIAS_PARA_PAGAR, EstadoAdjudicacion
 from ..servicios import cierre, consultas, pujas
 from .comunes import avisar, avisar_error, requiere_rol, requiere_sesion
@@ -44,7 +44,7 @@ def detalle_subasta(request, subasta_id, formulario=None):
         pk=subasta_id,
     )
     contexto = consultas.resumen_subasta(subasta, request.user)
-    contexto["formulario"] = formulario or FormularioMonto(initial={"monto": contexto["puja_minima"]})
+    contexto["formulario"] = formulario or FormularioMonto()
     contexto["es_comprador"] = request.user.tiene_rol(Rol.COMPRADOR)
     contexto["es_su_vendedor"] = subasta.articulo.vendedor_id == request.user.pk
     return render(request, "subastas/comprador_subasta.html", contexto)
@@ -128,18 +128,25 @@ def aceptar_precio_holandesa(request, subasta_id):
 @requiere_rol(Rol.COMPRADOR)
 def historial(request):
     mis_pujas = (
-        request.user.pujas.select_related("subasta__articulo")
+        request.user.pujas.select_related("subasta__articulo", "subasta__adjudicacion")
         .prefetch_related("movimientos")
         .order_by("-fecha_actualizacion", "-id")
     )
     filas = []
     for puja in mis_pujas:
         abierta = consultas.esta_abierta(puja.subasta)
+        estado = puja.get_estado_display()
+        if puja.estado == Puja.Estado.ACTIVA and not abierta:
+            # Solo para mostrar: la puja sigue ACTIVA en la base de datos.
+            adjudicacion = getattr(puja.subasta, "adjudicacion", None)
+            ganada = adjudicacion is not None and adjudicacion.ganador_id == request.user.pk
+            estado = "Ganadora" if ganada else "No ganada"
         filas.append(
             {
                 "puja": puja,
                 "tipo": tipos.obtener(puja.subasta.tipo),
                 "abierta": abierta,
+                "estado": estado,
                 "precio_actual": consultas.precio_actual(puja.subasta),
                 # Solo importa mientras la subasta sigue abierta.
                 "soy_lider": abierta and consultas.puja_mas_alta(puja.subasta) == puja,

@@ -4,13 +4,13 @@
 {% block banda %}
 <header class="banda">
   <div class="banda-texto">
-    <h1>Moderación de contenido</h1>
+    <h1>Moderación</h1>
     <p class="banda-contexto">{% if pendientes_rol.moderador %}{{ pendientes_rol.moderador }} artículo{{ pendientes_rol.moderador|pluralize }} por revisar{% else %}Sin pendientes.{% endif %}</p>
   </div>
 </header>
 {% endblock %}
 {% block contenido %}
-<h2>Contenido por revisar (CU-18)</h2>
+<h2>Contenido por revisar</h2>
 <p class="suave">El gestor no puede publicar una subasta hasta que apruebes su descripción y fotografías.</p>
 {% if pendientes %}
 <div class="tarjeta tabla-caja">
@@ -30,7 +30,7 @@
 </div>
 {% else %}<p class="vacio">No hay contenido por revisar.</p>{% endif %}
 
-<h2>Publicaciones activas (CU-19)</h2>
+<h2>Publicaciones activas</h2>
 {% if publicadas %}
 <div class="tarjeta tabla-caja">
   <table class="apilada">
@@ -48,7 +48,7 @@
 </div>
 {% else %}<p class="vacio">No hay publicaciones activas.</p>{% endif %}
 
-<h2>Participantes (CU-20)</h2>
+<h2>Participantes</h2>
 {% if participantes %}
 <div class="tarjeta tabla-caja">
   <table class="apilada">

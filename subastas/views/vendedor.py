@@ -103,10 +103,19 @@ def detalle_articulo(request, articulo_id):
     )
 
 
+# Estados en los que el artículo aún no llega al valuador ni a la aprobación del gestor.
+SIN_VALUAR_TODAVIA = frozenset(
+    {EstadoArticulo.REGISTRADO, EstadoArticulo.RECHAZADO, EstadoArticulo.EN_VALUACION}
+)
+
+
 # CU-04
 @requiere_rol(Rol.VENDEDOR)
 def proponer_subasta(request, articulo_id):
     articulo = servicio_articulos.articulo_propio(request.user, articulo_id)
+    # Sin valuación todavía no hay precio mínimo que mostrar: se regresa a la ficha del artículo.
+    if articulo.estado in SIN_VALUAR_TODAVIA:
+        return redirect("detalle_articulo", articulo_id=articulo.pk)
     formulario = FormularioPropuesta(request.POST or None)
     if request.method == "POST" and formulario.is_valid():
         try:

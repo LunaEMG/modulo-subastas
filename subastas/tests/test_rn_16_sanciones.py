@@ -1,7 +1,9 @@
 """RN-16: sanciones escalonadas (semanas, meses, baja definitiva). (CU-20)"""
 from datetime import timedelta
 
-from subastas.models import Notificacion, Puja
+from django.urls import reverse
+
+from subastas.models import Notificacion, Puja, Sancion
 from subastas.reglas import sanciones as reglas
 from subastas.servicios import autenticacion, cuentas, moderacion, pujas
 
@@ -94,3 +96,17 @@ class Sancionar(PruebaSubastas):
         self._sancionar()
         self.assertEqual(Puja.objects.get(comprador=self.infractor).estado, Puja.Estado.RETIRADA)
         self.assertEqual(Puja.objects.get(comprador=otro).estado, Puja.Estado.ACTIVA)
+
+    def test_err_16_un_nivel_que_no_es_numero_se_rechaza(self):
+        """Un nivel no numérico se rechaza con ERR-16, no con un error del servidor."""
+        error = self.assertErrorDeNegocio(
+            "ERR-16", moderacion.sancionar, moderador=self.moderador, usuario_id=self.infractor.pk, motivo="Spam", nivel="uno"
+        )
+        self.assertIn("nivel 1", error.mensaje)
+        self.assertFalse(Sancion.objects.exists())
+
+    def test_sancionar_a_un_usuario_que_no_existe_responde_404(self):
+        """Sancionar por POST un id que no existe responde 404, no un error del servidor."""
+        self.client.force_login(self.moderador)
+        respuesta = self.client.post(reverse("sancionar", args=[999999]), {"motivo": "Spam", "nivel": "1"})
+        self.assertEqual(respuesta.status_code, 404)

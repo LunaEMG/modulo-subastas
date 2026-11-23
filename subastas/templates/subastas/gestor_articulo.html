@@ -30,7 +30,7 @@
     <form method="post" class="separado" novalidate>{% csrf_token %}
       {{ formulario.as_div }}
       <p class="suave">El motivo es obligatorio para rechazar; al aprobar se guarda como observación.
-        {% if articulo.categoria.requiere_valuacion %}Al aprobar, el artículo pasa al valuador de bienes.{% else %}Esta categoría no pasa por valuador (S-09): al aprobar queda listo para proponer la subasta.{% endif %}</p>
+        {% if articulo.categoria.requiere_valuacion %}Al aprobar, el artículo pasa al valuador de bienes.{% else %}Esta categoría no pasa por valuador: al aprobar queda listo para proponer la subasta.{% endif %}</p>
       <div class="acciones">
         <button class="boton" type="submit" formaction="{% url 'aprobar_articulo' articulo.pk %}">Aprobar</button>
         <button class="boton peligro" type="submit" formaction="{% url 'rechazar_articulo' articulo.pk %}">Rechazar</button>

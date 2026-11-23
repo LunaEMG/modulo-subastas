@@ -25,7 +25,7 @@
         <a class="ir-avisos" href="{% url 'avisos' %}"{% if actual.avisos %} aria-current="{{ actual.avisos }}"{% endif %}>Avisos{% if avisos_sin_leer %} <span class="contador">{{ avisos_sin_leer }}<span class="solo-lector"> pendientes</span></span>{% endif %}</a>
       {% else %}{% block menu_visitante %}
         <a class="ir-entrar" href="{% url 'entrar' %}"{% if actual.entrar %} aria-current="{{ actual.entrar }}"{% endif %}>Entrar</a>
-        <a class="ir-registro" href="{% url 'registro' %}"{% if actual.registro %} aria-current="{{ actual.registro }}"{% endif %}>Registrarse</a>
+        <a class="ir-registro" href="{% url 'registro' %}"{% if actual.registro %} aria-current="{{ actual.registro }}"{% endif %}>Crear cuenta</a>
       {% endblock %}{% endif %}
     </nav>
     {% if user.is_authenticated %}

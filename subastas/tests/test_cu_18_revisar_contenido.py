@@ -100,3 +100,7 @@ class CU18RevisarContenido(PruebaSubastas):
         self.assertErrorDeNegocio("ERR-32", moderacion.aprobar_contenido, moderador=self.gestor, articulo_id=self.articulo.pk)
         self.client.force_login(self.crear_comprador())
         self.assertContains(self.client.get(reverse("moderador_bandeja"), follow=True), "ERR-32")
+
+    def test_un_articulo_que_no_existe_responde_404(self):
+        """Aprobar por POST el contenido de un id que no existe responde 404, no un error del servidor."""
+        self.assertEqual(self.client.post(reverse("aprobar_contenido", args=[999999])).status_code, 404)

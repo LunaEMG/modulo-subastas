@@ -46,7 +46,7 @@ class CU08BuscarSubastas(PruebaSubastas):
     def test_ca_08_3_el_detalle_muestra_precio_actual_y_puja_minima(self):
         """CA-08.3 El detalle muestra la puja mínima aceptada y la opción de comprar ya."""
         detalle = self.client.get(reverse("detalle_subasta", args=[self.subasta.pk]))
-        self.assertContains(detalle, "Mínimo 1,001 fichas")
+        self.assertContains(detalle, "Puja mínima 1,001 fichas")
         self.assertContains(detalle, "Comprar ya por 5,000")
 
     def test_rnf_02_tarjetas_con_h2_imagenes_diferidas_y_pagina_actual(self):
@@ -126,3 +126,18 @@ class CU08BuscarSubastas(PruebaSubastas):
         self.assertEqual(self.client.get(detalle).status_code, 200)
         self.client.force_login(self.vendedor)
         self.assertEqual(self.client.get(detalle).status_code, 200)
+
+    def test_una_busqueda_sin_resultados_ofrece_limpiar_filtros(self):
+        """Una búsqueda sin resultados ofrece el enlace «Limpiar filtros» a la búsqueda sin filtros."""
+        respuesta = self.client.get(reverse("buscar_subastas"), {"texto": "no existe nada así"})
+        self.assertContains(respuesta, f'<a href="{reverse("buscar_subastas")}">Limpiar filtros</a>')
+
+    def test_rnf_02_el_enlace_de_la_foto_tiene_nombre(self):
+        """RNF-02 El enlace que abre la fotografía del artículo tiene nombre accesible."""
+        respuesta = self.client.get(reverse("detalle_subasta", args=[self.subasta.pk]))
+        self.assertContains(respuesta, 'aria-label="Abrir la fotografía 1 de Reloj de prueba en tamaño completo"')
+
+    def test_rnf_02_la_proxima_bajada_lleva_fichas(self):
+        """RNF-02 La próxima bajada de la holandesa lleva su unidad en fichas."""
+        holandesa = self.subasta_abierta(tipo="HOLANDESA", holandesa_precio_inicial=5000, holandesa_decremento=100, holandesa_intervalo_min=60)
+        self.assertContains(self.client.get(reverse("detalle_subasta", args=[holandesa.pk])), "(−100 fichas)")

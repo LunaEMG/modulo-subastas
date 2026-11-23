@@ -119,3 +119,11 @@ class CU09Pujar(PruebaSubastas):
         respuesta = self.client.get(reverse("detalle_subasta", args=[tope.pk]))
         self.assertContains(respuesta, "ya no se puede subir")
         self.assertNotContains(respuesta, 'id="puja"')
+
+    def test_rnf_02_el_campo_de_puja_viene_vacio_con_el_minimo_como_ayuda(self):
+        """RNF-02 El campo de puja viene vacío; el mínimo se muestra como ayuda junto al campo, ligada por aria-describedby."""
+        html = self.client.get(self.detalle).content.decode()
+        campo = html.split('name="monto"')[1].split(">")[0]
+        self.assertNotIn("value=", campo)
+        self.assertIn('aria-describedby="ayuda-monto"', campo)
+        self.assertIn('<span class="ayuda" id="ayuda-monto">Puja mínima 1,001 fichas.</span>', html)

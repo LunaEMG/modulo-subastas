@@ -23,7 +23,7 @@ class CU11RetirarPuja(PruebaSubastas):
     def test_ca_11_2_al_retirarse_el_precio_actual_regresa(self):
         """CA-11.2 Al retirar la puja más alta, el precio actual regresa al precio de salida (S-03)."""
         self.client.post(reverse("retirar_puja", args=[self.subasta.pk]))
-        self.assertContains(self.client.get(self.detalle), "Mínimo 1,001 fichas")
+        self.assertContains(self.client.get(self.detalle), "Puja mínima 1,001 fichas")
 
     def test_ca_11_3_con_la_subasta_cerrada_no_se_retira(self):
         """CA-11.3 Después del cierre la puja ya no se puede retirar (RN-07)."""

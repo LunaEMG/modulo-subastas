@@ -141,18 +141,25 @@ def procesar_pendientes() -> dict:
         estado=EstadoSubasta.ABIERTA, fecha_cierre__lte=instante
     ).values_list("pk", flat=True)
     for subasta_id in list(por_cerrar):
+        # La excepción se atrapa fuera del atomic: un registro con error no detiene a los demás.
         try:
-            cerrar_subasta(subasta_id)
+            with transaction.atomic():
+                cerrar_subasta(subasta_id)
             resultado["cerradas"] += 1
         except ErrorDeNegocio as error:
             registro.info("Subasta %s omitida al cerrar: %s", subasta_id, error)
+        except Exception:
+            registro.exception("Error inesperado al cerrar la subasta %s", subasta_id)
     vencidas = Adjudicacion.objects.filter(
         estado=EstadoAdjudicacion.PENDIENTE_PAGO, fecha_limite_pago__lt=instante
     ).values_list("pk", flat=True)
     for adjudicacion_id in list(vencidas):
         try:
-            vencer_pago_y_resubastar(adjudicacion_id)
+            with transaction.atomic():
+                vencer_pago_y_resubastar(adjudicacion_id)
             resultado["resubastadas"] += 1
         except ErrorDeNegocio as error:
             registro.info("Adjudicación %s omitida al vencer: %s", adjudicacion_id, error)
+        except Exception:
+            registro.exception("Error inesperado al vencer la adjudicación %s", adjudicacion_id)
     return resultado

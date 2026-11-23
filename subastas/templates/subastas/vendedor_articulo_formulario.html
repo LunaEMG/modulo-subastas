@@ -2,6 +2,7 @@
 {% block titulo %}{{ titulo }} · Casa de Subastas{% endblock %}
 {% block banda %}
 <header class="banda banda-angosta">
+  <p class="migas">{% if articulo %}<a href="{% url 'detalle_articulo' articulo.pk %}">← Volver al artículo</a>{% else %}<a href="{% url 'mis_articulos' %}">← Mis artículos</a>{% endif %}</p>
   <div class="banda-texto">
     <h1>{{ titulo }}</h1>
     {% if articulo %}<p class="banda-contexto chips-ficha"><span>{{ articulo.titulo }}</span> {% include "subastas/_estado_articulo.html" %}</p>{% endif %}

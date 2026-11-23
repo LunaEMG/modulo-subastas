@@ -91,3 +91,12 @@ class CU01Registrarse(PruebaSubastas):
         entrar = self.client.get(reverse("entrar")).content.decode()
         self.assertIn('autocomplete="email"', entrar)
         self.assertIn('autocomplete="current-password"', entrar)
+
+    def test_rnf_02_crear_cuenta_se_llama_igual_en_menu_titulo_y_boton(self):
+        """RNF-02 «Crear cuenta» se llama igual en el menú, la pestaña, el título y el botón."""
+        html = self.client.get(reverse("registro")).content.decode()
+        self.assertIn('aria-current="page">Crear cuenta</a>', html)
+        self.assertIn("<title>Crear cuenta · Casa de Subastas</title>", html)
+        self.assertIn("<h1>Crear cuenta</h1>", html)
+        self.assertIn('<button class="boton" type="submit">Crear cuenta</button>', html)
+        self.assertNotIn("Registrarse</a>", html)
