@@ -13,11 +13,14 @@
   <button class="boton boton-buscar" type="submit">Filtrar</button>
 </form>
 </div>
-{# Un chip por categoría (accesos_categoria); el de la categoría filtrada lleva aria-current. #}
-<nav class="accesos-categoria accesos-listado" aria-label="Categorías">{% accesos_categoria activa=formulario.categoria.value %}</nav>
 <div class="barra-resultados">
   <h1>Subastas abiertas</h1>
   <p class="total">{{ resultados|length|intcomma }} resultado{{ resultados|length|pluralize }}</p>
+  {# Una píldora por filtro aplicado (filtros_activos); cada una enlaza a la misma búsqueda sin ese filtro. #}
+  {% filtros_activos formulario as filtros %}{% if filtros %}
+  <ul class="filtros-activos" aria-label="Filtros activos">
+    {% for f in filtros %}<li><a class="filtro-activo" href="{{ f.href }}" aria-label="Quitar filtro {{ f.etiqueta }}">{{ f.etiqueta }}</a></li>
+    {% endfor %}</ul>{% endif %}
 </div>
 {% if resultados %}
 {# Lista en el teléfono y mosaico desde 640 px; lo decide solo el CSS. #}

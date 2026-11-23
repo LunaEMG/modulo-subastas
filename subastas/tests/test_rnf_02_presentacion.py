@@ -1,6 +1,7 @@
 """RNF-02 Presentación: el tiempo restante se calcula en la plantilla desde la fecha de cierre que ya existe."""
 import os
 import re
+from html import unescape
 from datetime import timedelta
 from urllib.parse import parse_qs, quote
 
@@ -134,12 +135,17 @@ class RNF02FichaDeSubasta(PruebaSubastas):
 
 
 class RNF02Portada(PruebaSubastas):
-    def test_rnf_02_sin_sesion_hay_una_sola_accion_principal(self):
-        """RNF-02 Sin sesión, la portada tiene una sola acción principal en oro (Entrar) y «Crear cuenta» como secundaria."""
+    def test_rnf_02_sin_sesion_el_oro_es_crear_cuenta_y_explorar_subastas(self):
+        """RNF-02 Sin sesión, el oro es «Crear cuenta» en el encabezado y «Explorar subastas» en el hero, que pasa por Entrar y vuelve al listado; «Cómo funciona» es secundaria y baja a su sección."""
         html = self.client.get(reverse("inicio")).content.decode()
-        self.assertEqual(botones_principales(html), [["boton"]])
-        self.assertIn('<a class="boton" href="{}">Entrar</a>'.format(reverse("entrar")), html)
-        self.assertIn('class="boton secundario" href="{}">Crear cuenta</a>'.format(reverse("registro")), html)
+        self.assertEqual(botones_principales(html), [["boton", "boton-registro"], ["boton"]])
+        self.assertIn('<a class="boton boton-registro" href="{}">Crear cuenta</a>'.format(reverse("registro")), html)
+        explorar = re.search(r'<a class="boton" href="([^"]+)">Explorar subastas</a>', html)
+        ruta, consulta = explorar.group(1).split("?", 1)
+        self.assertEqual(ruta, reverse("entrar"))
+        self.assertEqual(parse_qs(consulta)["next"], [reverse("buscar_subastas")])
+        self.assertIn('<a class="boton secundario" href="#como-funciona">Cómo funciona</a>', html)
+        self.assertIn('id="como-funciona"', html)
 
     def test_rnf_02_con_sesion_cada_rol_es_una_tarjeta(self):
         """RNF-02 Con sesión, la portada muestra una tarjeta por cada lugar al que puede ir el usuario; el único botón en oro es «Buscar»."""
@@ -221,15 +227,6 @@ class RNF02Portada(PruebaSubastas):
                 foto = "/static/subastas/categorias/{}.jpg".format(slugify(nombre))
                 self.assertRegex(html, r'<a class="tarjeta-categoria cat-{}" href="[^"]+"><img src="{}" alt=""'.format(slugify(nombre), re.escape(foto)))
 
-    def test_rnf_02_los_chips_del_listado_no_usan_fotos_ni_tinte(self):
-        """RNF-02 Los chips del listado llevan ícono y nombre, sin miniaturas ni clase de tinte."""
-        self.client.force_login(self.crear_comprador())
-        html = self.client.get(reverse("buscar_subastas")).content.decode()
-        self.assertEqual(html.count('class="acceso-categoria"'), Categoria.objects.count())
-        self.assertNotIn("subastas/categorias/", html)
-        self.assertNotRegex(html, r'class="acceso-categoria[^"]*cat-')
-
-
 class RNF02PantallasDeTrabajo(PruebaSubastas):
     def setUp(self):
         super().setUp()
@@ -294,10 +291,12 @@ class RNF02Iconos(PruebaSubastas):
         self.assertNotIn("data:image/svg", css)
 
     def test_rnf_02_el_menu_lleva_el_icono_de_cada_destino(self):
-        """RNF-02 Cada enlace del menú lleva la clase de su ícono: sin sesión Entrar y Registrarse; con sesión los de su rol."""
-        html = self.client.get(reverse("inicio")).content.decode()
+        """RNF-02 Cada enlace del menú lleva la clase de su ícono: sin sesión Entrar y Registrarse (en la portada, Entrar y el botón «Crear cuenta»); con sesión los de su rol."""
+        html = self.client.get(reverse("entrar")).content.decode()
         self.assertIn('class="ir-entrar" href="{}"'.format(reverse("entrar")), html)
         self.assertIn('class="ir-registro" href="{}"'.format(reverse("registro")), html)
+        html = self.client.get(reverse("inicio")).content.decode()
+        self.assertIn('class="ir-entrar" href="{}"'.format(reverse("entrar")), html)
         self.client.force_login(self.crear_comprador())
         html = self.client.get(reverse("inicio")).content.decode()
         for clase, destino in [("ir-subastas", "buscar_subastas"), ("ir-historial", "historial"), ("ir-avisos", "avisos")]:
@@ -488,31 +487,41 @@ class RNF02ChipsDeCategoria(PruebaSubastas):
         self.assertIn('<span class="icono-respaldo" style="--icono: url(\'/static/subastas/iconos/tag.svg\')"></span>', tarjeta.group(1))
         self.assertIn('<span class="nombre-categoria">Instrumentos musicales</span>', tarjeta.group(1))
 
+    def test_rnf_02_los_filtros_activos_son_pildoras_que_quitan_solo_ese_filtro(self):
+        """RNF-02 Junto al total, cada filtro activo (texto, categoría, tipo) es una píldora con su nombre y
+        un enlace a la misma búsqueda sin ese filtro; sin filtros no hay píldoras."""
+        self.subasta_abierta()
+        self.client.force_login(self.crear_comprador())
+        buscar = reverse("buscar_subastas")
+        for consulta in ({}, {"texto": "  ", "categoria": "", "tipo": ""}):
+            self.assertNotContains(self.client.get(buscar, consulta), "filtros-activos")
+        html = self.client.get(buscar, {"texto": "reloj", "categoria": "Relojes", "tipo": "INGLESA"}).content.decode()
+        barra = html.split('<div class="barra-resultados">')[1].split("</div>")[0]
+        pildoras = re.findall(r'<a class="filtro-activo" href="([^"]+)" aria-label="Quitar filtro ([^"]+)">([^<]+)</a>', barra)
+        self.assertEqual([(etiqueta, texto) for _, etiqueta, texto in pildoras],
+                         [("«reloj»", "«reloj»"), ("Relojes", "Relojes"), ("Inglesa", "Inglesa")])
+        consultas = [parse_qs(unescape(href).split("?", 1)[1]) for href, _, _ in pildoras]
+        self.assertTrue(all(unescape(href).startswith(buscar + "?") for href, _, _ in pildoras))
+        self.assertEqual(consultas, [
+            {"categoria": ["Relojes"], "tipo": ["INGLESA"]},
+            {"texto": ["reloj"], "tipo": ["INGLESA"]},
+            {"texto": ["reloj"], "categoria": ["Relojes"]},
+        ])
+        solo_tipo = self.client.get(buscar, {"tipo": "INGLESA"}).content.decode()
+        self.assertIn('<a class="filtro-activo" href="{}" aria-label="Quitar filtro Inglesa">Inglesa</a>'.format(buscar), solo_tipo)
+
     def test_rnf_02_una_categoria_nueva_usa_el_icono_generico_sin_tocar_plantillas(self):
-        """RNF-02 Una categoría que no está en el mapeo aparece como chip, con el ícono «tag», en el listado y en la insignia."""
+        """RNF-02 Una categoría que no está en el mapeo lleva el ícono «tag» en la insignia de la tarjeta."""
         nueva = Categoria.objects.create(nombre="Instrumentos musicales")
         subasta = self.subasta_abierta()
         subasta.articulo.categoria = nueva
         subasta.articulo.save()
         self.client.force_login(self.crear_comprador())
         html = self.client.get(reverse("buscar_subastas")).content.decode()
-        chip = re.search(r'<a class="acceso-categoria" href="[^"]*"[^>]*><span>Instrumentos musicales</span>', html)
-        self.assertIsNotNone(chip)
-        self.assertIn("/static/subastas/iconos/tag.svg", chip.group(0))
         self.assertIn(
             '<span class="chip-categoria" style="--icono: url(\'/static/subastas/iconos/tag.svg\')">Instrumentos musicales</span>',
             html,
         )
-
-    def test_rnf_02_el_chip_de_la_categoria_filtrada_lleva_aria_current(self):
-        """RNF-02 En el listado filtrado, solo el chip de esa categoría lleva aria-current; sin filtro, ninguno."""
-        self.client.force_login(self.crear_comprador())
-        html = self.client.get(reverse("buscar_subastas")).content.decode()
-        self.assertEqual(html.count("aria-current=\"true\""), 0)
-        nombre = Categoria.objects.first().nombre
-        html = self.client.get(reverse("buscar_subastas"), {"categoria": nombre}).content.decode()
-        activos = re.findall(r'<a class="acceso-categoria" href="([^"]+)" aria-current="true"[^>]*><span>([^<]+)</span>', html)
-        self.assertEqual(activos, [(reverse("buscar_subastas") + "?categoria=" + quote(nombre), nombre)])
 
     def test_rnf_02_el_mapeo_vive_en_un_solo_lugar_y_el_tinte_solo_en_la_insignia(self):
         """RNF-02 La hoja no asigna íconos por categoría, y el tono de categoría solo lo usan la insignia y la tarjeta de portada."""
@@ -531,6 +540,3 @@ class RNF02ChipsDeCategoria(PruebaSubastas):
         self.assertNotIn("scale(", css)
         self.assertIn(".tarjeta-categoria:hover { box-shadow: 0 0 0 2px var(--borde-campo); }", css)
 
-    def test_rnf_02_el_nombre_del_chip_no_se_parte(self):
-        """RNF-02 El nombre de un chip del listado («Artículos de oficina») no se parte en dos líneas."""
-        self.assertIn(".acceso-categoria span { white-space: nowrap; }", hoja_de_estilos())

@@ -5,8 +5,10 @@ El tiempo restante se calcula con reloj.ahora(), no con timezone.now(), para que
 (menos de un día) es una decisión de presentación, no una regla de negocio.
 """
 from datetime import datetime, timedelta
+from urllib.parse import urlencode
 
 from django import template
+from django.urls import reverse
 
 from subastas import reloj
 
@@ -120,13 +122,34 @@ def tarjetas_categoria(entrar=False):
     return {"categorias": Categoria.objects.all(), "entrar": entrar}
 
 
-@register.inclusion_tag("subastas/_accesos_categoria.html")
-def accesos_categoria(activa="", entrar=False):
-    """Listado (CU-08): un chip por categoría registrada hacia el buscador con ?categoria=<nombre>.
+@register.simple_tag
+def filtros_activos(formulario):
+    """Listado (CU-08): una píldora por filtro aplicado (texto, categoría, tipo).
 
-    Con `entrar`, el chip lleva a Entrar y `next` devuelve al listado ya filtrado. `activa` es el
-    nombre de la categoría filtrada: su chip se marca con aria-current.
+    Cada una lleva la etiqueta del filtro y el enlace a la misma búsqueda con los demás filtros y sin ese.
+    Sin filtros (o con el formulario sin enviar) no hay píldoras.
     """
-    from subastas.models import Categoria
-
-    return {"categorias": Categoria.objects.all(), "activa": activa or "", "entrar": entrar}
+    if not formulario.is_bound or not formulario.is_valid():
+        return []
+    datos = formulario.cleaned_data
+    valores = {
+        "texto": datos["texto"].strip(),
+        "categoria": datos["categoria"].nombre if datos["categoria"] else "",
+        "tipo": datos["tipo"],
+    }
+    etiquetas = {
+        "texto": "«{}»".format(valores["texto"]),
+        "categoria": valores["categoria"],
+        "tipo": dict(formulario.fields["tipo"].choices).get(valores["tipo"], ""),
+    }
+    buscar = reverse("buscar_subastas")
+    pildoras = []
+    for campo, valor in valores.items():
+        if not valor:
+            continue
+        resto = {otro: v for otro, v in valores.items() if v and otro != campo}
+        pildoras.append({
+            "etiqueta": etiquetas[campo],
+            "href": buscar + ("?" + urlencode(resto) if resto else ""),
+        })
+    return pildoras
