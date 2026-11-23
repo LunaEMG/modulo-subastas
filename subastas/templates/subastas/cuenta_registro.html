@@ -1,12 +1,21 @@
 {% extends "subastas/base.html" %}
 {% block titulo %}Crear cuenta · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda banda-cuenta">
+  <div class="banda-texto">
+    <h1>Crear cuenta</h1>
+    <p class="banda-contexto">Regístrate como comprador, vendedor o ambos con tu código postal en México.</p>
+  </div>
+</header>
+{% endblock %}
 {% block contenido %}
-<div class="tarjeta estrecho">
-  <h1>Crear cuenta</h1>
+<div class="cuenta">
+<div class="tarjeta tarjeta-cuenta">
   <form method="post" novalidate>{% csrf_token %}
     {{ formulario.as_div }}
     <button class="boton" type="submit">Registrarme</button>
   </form>
   <p class="suave">¿Ya tienes cuenta? <a href="{% url 'entrar' %}">Entrar</a></p>
+</div>
 </div>
 {% endblock %}

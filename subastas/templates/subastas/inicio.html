@@ -5,6 +5,14 @@
         <a class="ir-entrar" href="{% url 'entrar' %}">Entrar</a>
         <a class="boton boton-registro" href="{% url 'registro' %}">Crear cuenta</a>
 {% endblock %}
+{% block banda %}{% if user.is_authenticated %}
+<header class="banda">
+  <div class="banda-texto">
+    <h1>Casa de Subastas</h1>
+    <p class="banda-contexto">Hola, {{ user.nombre }}. Esto es lo que puedes hacer con tu cuenta:</p>
+  </div>
+</header>
+{% endif %}{% endblock %}
 {% block contenido %}
 {% url 'buscar_subastas' as buscar %}
 {% if not user.is_authenticated %}
@@ -61,16 +69,13 @@
   </ul>
 </section>
 {% else %}
-<h1>Casa de Subastas</h1>
-<p class="saludo">Hola, {{ user.nombre }}. Esto es lo que puedes hacer con tu cuenta:</p>
-
-{# Píldora de búsqueda: envía «texto» al buscador existente (CU-08). #}
+{# Píldora de búsqueda, en claro bajo la banda del saludo: envía «texto» al buscador existente (CU-08). #}
 <form class="buscador-inicio" method="get" action="{{ buscar }}" role="search">
   <div class="seg-texto"><label for="id_texto_inicio" class="solo-lector">Buscar</label><input type="search" name="texto" id="id_texto_inicio" enterkeyhint="search"></div>
   <button class="boton boton-buscar" type="submit">Buscar</button>
 </form>
 
-{# Tarjetas por categoría: el buscador filtra la categoría por su nombre. Los chips solo van en el listado. #}
+{# Tarjetas por categoría: el buscador filtra la categoría por su nombre. #}
 <nav class="portada-categorias" aria-labelledby="titulo-accesos">
   <h2 id="titulo-accesos" class="solo-lector">Categorías</h2>
   {% tarjetas_categoria %}
@@ -78,25 +83,25 @@
 
 <div class="rejilla rejilla-roles">
   <a class="tarjeta tarjeta-enlace tarjeta-rol" href="{% url 'buscar_subastas' %}">
-    <h2 class="titulo-tarjeta">Subastas abiertas</h2><p class="suave">Busca artículos y consulta su precio actual.</p></a>
+    <h2 class="titulo-tarjeta ir-subastas">Subastas abiertas</h2><p class="suave">Busca artículos y consulta su precio actual.</p></a>
   {% if es_comprador %}
   <a class="tarjeta tarjeta-enlace tarjeta-rol" href="{% url 'historial' %}">
-    <h2 class="titulo-tarjeta">Comprador</h2><p class="suave">Tus pujas, sus cambios y las subastas que ganaste.</p>
+    <h2 class="titulo-tarjeta ir-historial">Comprador</h2><p class="suave">Tus pujas, sus cambios y las subastas que ganaste.</p>
     {% if pendientes_rol.comprador %}<p class="pendientes-tarjeta"><span class="contador por-atender">{{ pendientes_rol.comprador }}</span> pago{{ pendientes_rol.comprador|pluralize }} pendiente{{ pendientes_rol.comprador|pluralize }}</p>{% else %}<p class="pendientes-tarjeta suave">Sin pendientes.</p>{% endif %}</a>
   {% endif %}
   {% if es_vendedor %}
   <a class="tarjeta tarjeta-enlace tarjeta-rol" href="{% url 'mis_articulos' %}">
-    <h2 class="titulo-tarjeta">Vendedor</h2><p class="suave">Registra artículos, propón subastas y sigue su estado.</p>
+    <h2 class="titulo-tarjeta ir-articulos">Vendedor</h2><p class="suave">Registra artículos, propón subastas y sigue su estado.</p>
     {% if pendientes_rol.vendedor %}<p class="pendientes-tarjeta"><span class="contador por-atender">{{ pendientes_rol.vendedor }}</span> artículo{{ pendientes_rol.vendedor|pluralize }} requiere{{ pendientes_rol.vendedor|pluralize:"n" }} tu acción</p>{% else %}<p class="pendientes-tarjeta suave">Sin pendientes.</p>{% endif %}</a>
   {% endif %}
   {% if es_gestor %}
   <a class="tarjeta tarjeta-enlace tarjeta-rol" href="{% url 'gestor_bandeja' %}">
-    <h2 class="titulo-tarjeta">Gestor de Subastas</h2><p class="suave">Revisa artículos y valida las propuestas de subasta.</p>
+    <h2 class="titulo-tarjeta ir-gestor">Gestor de Subastas</h2><p class="suave">Revisa artículos y valida las propuestas de subasta.</p>
     {% if pendientes_rol.gestor %}<p class="pendientes-tarjeta"><span class="contador por-atender">{{ pendientes_rol.gestor_articulos }}</span> artículo{{ pendientes_rol.gestor_articulos|pluralize }} por revisar<br><span class="contador por-atender">{{ pendientes_rol.gestor_propuestas }}</span> propuesta{{ pendientes_rol.gestor_propuestas|pluralize }} por validar</p>{% else %}<p class="pendientes-tarjeta suave">Sin pendientes.</p>{% endif %}</a>
   {% endif %}
   {% if es_moderador %}
   <a class="tarjeta tarjeta-enlace tarjeta-rol" href="{% url 'moderador_bandeja' %}">
-    <h2 class="titulo-tarjeta">Moderador de Contenido</h2><p class="suave">Revisa descripciones y fotografías, retira publicaciones y aplica sanciones.</p>
+    <h2 class="titulo-tarjeta ir-moderacion">Moderador de Contenido</h2><p class="suave">Revisa descripciones y fotografías, retira publicaciones y aplica sanciones.</p>
     {% if pendientes_rol.moderador %}<p class="pendientes-tarjeta"><span class="contador por-atender">{{ pendientes_rol.moderador }}</span> artículo{{ pendientes_rol.moderador|pluralize }} por revisar</p>{% else %}<p class="pendientes-tarjeta suave">Sin pendientes.</p>{% endif %}</a>
   {% endif %}
 </div>

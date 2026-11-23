@@ -1,8 +1,15 @@
 {% extends "subastas/base.html" %}
 {% load humanize %}
 {% block titulo %}Pendientes del gestor · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda">
+  <div class="banda-texto">
+    <h1>Pendientes del gestor</h1>
+    <p class="banda-contexto">{% if pendientes_rol.gestor %}{{ pendientes_rol.gestor_articulos }} artículo{{ pendientes_rol.gestor_articulos|pluralize }} por revisar · {{ pendientes_rol.gestor_propuestas }} propuesta{{ pendientes_rol.gestor_propuestas|pluralize }} por validar{% else %}Sin pendientes.{% endif %}</p>
+  </div>
+</header>
+{% endblock %}
 {% block contenido %}
-<h1>Pendientes del gestor</h1>
 <h2>Artículos por revisar (CU-06)</h2>
 {% if articulos %}
 <div class="tarjeta tabla-caja">

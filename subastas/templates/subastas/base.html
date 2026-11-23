@@ -36,6 +36,10 @@
   </div>
 </header>
 <main class="contenedor" id="contenido" tabindex="-1">
+  {% comment %}Banda de encabezado oscura (.banda): h1 en blanco, línea de contexto opcional (.banda-contexto) y, si la pantalla
+     tiene una acción principal propia, esa acción en oro (.banda-accion). Va antes de los mensajes para quedar pegada al
+     encabezado. Vacía por defecto: las pantallas que no la definen no cambian.{% endcomment %}
+  {% block banda %}{% endblock %}
   {% if messages %}
   {# Los errores se anuncian de inmediato (alert); las confirmaciones, sin interrumpir (status). #}
   <ul class="mensajes" role="alert">

@@ -1,15 +1,21 @@
 {% extends "subastas/base.html" %}
 {% block titulo %}Avisos · Casa de Subastas{% endblock %}
-{% block contenido %}
-<div class="acciones cabecera-pagina">
-  <h1>Avisos</h1>
+{% block banda %}
+<header class="banda">
+  <div class="banda-texto">
+    <h1>Avisos</h1>
+    <p class="banda-contexto">Cada aviso también se envía a tu correo.</p>
+  </div>
   {% if avisos_sin_leer %}
-  <form method="post" action="{% url 'marcar_leidas' %}">{% csrf_token %}
-    <button class="boton secundario" type="submit">Marcar todos como leídos</button>
-  </form>
+  <div class="banda-accion">
+    <form method="post" action="{% url 'marcar_leidas' %}">{% csrf_token %}
+      <button class="boton" type="submit">Marcar todos como leídos</button>
+    </form>
+  </div>
   {% endif %}
-</div>
-<p class="suave">Cada aviso también se envía a tu correo.</p>
+</header>
+{% endblock %}
+{% block contenido %}
 {% for aviso in avisos %}
 <div class="tarjeta aviso {% if not aviso.leida_en %}no-leida{% endif %}">
   <h2 class="titulo-tarjeta">{% if not aviso.leida_en %}<span class="marca-nuevo">Nuevo</span> {% endif %}{{ aviso.asunto }}</h2>

@@ -1,11 +1,17 @@
 {% extends "subastas/base.html" %}
 {% load humanize %}
 {% block titulo %}Proponer subasta · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda banda-angosta">
+  <div class="banda-texto">
+    <h1>Proponer subasta</h1>
+    <p class="banda-contexto"><strong>{{ articulo.titulo }}</strong><br>
+      Precio mínimo avalado: {{ precio_minimo|intcomma }} fichas. La subasta arranca en ese precio.</p>
+  </div>
+</header>
+{% endblock %}
 {% block contenido %}
 <div class="tarjeta estrecho">
-  <h1>Proponer subasta</h1>
-  <p><strong>{{ articulo.titulo }}</strong><br>
-    <span class="suave">Precio mínimo avalado: {{ precio_minimo|intcomma }} fichas. La subasta arranca en ese precio.</span></p>
   {% if elegir_tipo %}
   <p class="suave">Paso 1 de 2: el tipo de subasta. Después llenas solo los datos de ese tipo.</p>
   <form method="get">

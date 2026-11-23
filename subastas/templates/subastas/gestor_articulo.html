@@ -1,9 +1,16 @@
 {% extends "subastas/base.html" %}
 {% load humanize %}
 {% block titulo %}Revisar artículo · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda">
+  <p class="migas"><a href="{% url 'gestor_bandeja' %}">← Pendientes</a></p>
+  <div class="banda-texto">
+    <h1>{{ articulo.titulo }}</h1>
+    <p class="banda-contexto chips-ficha"><span>{{ articulo.vendedor }} · {{ articulo.categoria }}</span> {% include "subastas/_estado_articulo.html" %}</p>
+  </div>
+</header>
+{% endblock %}
 {% block contenido %}
-<p class="migas"><a href="{% url 'gestor_bandeja' %}">← Pendientes</a></p>
-<h1>{{ articulo.titulo }}</h1>
 <div class="dos-columnas">
   <div class="tarjeta">
     {% include "subastas/_fotografias.html" %}

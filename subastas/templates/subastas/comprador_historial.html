@@ -1,8 +1,15 @@
 {% extends "subastas/base.html" %}
 {% load humanize %}
 {% block titulo %}Mi historial · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda">
+  <div class="banda-texto">
+    <h1>Mi historial</h1>
+    <p class="banda-contexto">Tus pujas, sus cambios y las subastas que ganaste.</p>
+  </div>
+</header>
+{% endblock %}
 {% block contenido %}
-<h1>Mi historial</h1>
 <h2>Subastas ganadas</h2>
 {% if ganadas %}
 <div class="tarjeta tabla-caja">

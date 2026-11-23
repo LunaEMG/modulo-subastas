@@ -1,8 +1,15 @@
 {% extends "subastas/base.html" %}
 {% block titulo %}Sanciones · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda">
+  <p class="migas"><a href="{% url 'moderador_bandeja' %}">← Moderación</a></p>
+  <div class="banda-texto">
+    <h1>{{ sancionado.nombre }}</h1>
+    <p class="banda-contexto chips-ficha"><span>{{ sancionado.correo }}</span> <span class="sello {% if estado == 'Activa' %}sello-en-curso{% else %}sello-detenido{% endif %}">{{ estado }}</span></p>
+  </div>
+</header>
+{% endblock %}
 {% block contenido %}
-<p class="migas"><a href="{% url 'moderador_bandeja' %}">← Moderación</a></p>
-<h1>{{ sancionado.nombre }}</h1>
 <div class="dos-columnas">
   <div class="tarjeta">
     <dl class="datos">

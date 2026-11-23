@@ -354,8 +354,6 @@ form div > .opcion-tipo, .opcion-tipo {
 .separado-sm { margin-top: 8px; }
 .separado-abajo { margin-bottom: 16px; }
 .sin-margen { margin: 0; }
-.cabecera-pagina { justify-content: space-between; margin-bottom: 16px; }
-.cabecera-pagina > h1 { margin: 0; }
 
 /* ── Campos: 48 px, borde de 1 px que cumple 3:1; en foco, borde tinta y anillo oro. ── */
 form > div, form .campo { margin-bottom: 16px; }
@@ -555,14 +553,12 @@ main.contenedor { width: 100%; flex: 1 0 auto; }
 .sin-cortar { white-space: nowrap; }
 
 /* ════ Listado de subastas (CU-08) ════ */
-/* Buscador en píldora, persistente sin JavaScript. El fondo blanco y su filo llegan a todo el ancho con
-   sombras de expansión recortadas (así no se ensancha la página ni aparece desplazamiento horizontal). */
+/* Buscador en píldora, persistente sin JavaScript, en una franja blanca bajo la banda oscura. El blanco y su filo
+   inferior llegan a todo el ancho con una sola imagen de borde que sale 100vmax a los lados (no ensancha la página
+   ni crea desplazamiento horizontal, y al pintarse de una vez no deja costuras de un píxel). */
 .busqueda {
-  position: sticky; top: 0; z-index: 10;
-  margin-top: -24px; padding: 14px 0;
-  background: var(--superficie);
-  box-shadow: 0 0 0 100vmax var(--superficie), 0 1px 0 100vmax var(--borde);
-  clip-path: inset(0 -100vmax -1px);
+  position: sticky; top: 0; z-index: 10; padding: 14px 0;
+  border-image: linear-gradient(var(--superficie) calc(100% - 1px), var(--borde) 0) fill 0 / 0 / 0 100vmax;
 }
 form.buscador { display: grid; grid-template-columns: minmax(0, 1fr) auto; row-gap: 10px; margin: 0; }
 form.buscador > div, .filtros > div { margin: 0; }
@@ -616,12 +612,11 @@ form.buscador > div, .filtros > div { margin: 0; }
   .buscador .boton-buscar:hover { border-color: var(--oro-hover); }
 }
 
-/* Barra de resultados: título y total. */
+/* Barra de resultados, en claro bajo la banda: total y píldoras de filtros activos. */
 .barra-resultados {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px;
-  margin: 20px 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--borde);
+  margin: 20px 0 14px; padding-bottom: 12px; border-bottom: 1px solid var(--borde);
 }
-.barra-resultados h1 { margin: 0; font-size: clamp(1.35rem, 1.1rem + 1vw, 1.75rem); }
 .total { margin: 0; color: var(--texto-suave); font-variant-numeric: tabular-nums; }
 /* Filtros activos junto al total: una píldora por filtro con su «x»; el enlace es la misma búsqueda sin él. */
 .filtros-activos { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
@@ -683,23 +678,21 @@ form.buscador > div, .filtros > div { margin: 0; }
 /* ════ Ficha de subasta y caja de compra (CU-08 a CU-12) ════ */
 /* Ficha abierta: la página es blanca y sin marcos; todo lleva al botón de la caja. */
 body:has(.ficha-subasta) { background: var(--superficie); }
-/* Migas: el enlace de regreso llega a 44 px de alto sin cambiar el texto. */
+/* Migas: el enlace de regreso llega a 44 px de alto sin cambiar el texto. Sobre la banda va en blanco. */
 .migas { margin: -8px 0 4px; }
 .migas a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }
 .ficha-subasta {
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px;
-  grid-template-areas: "cabecera" "galeria" "compra";
+  grid-template-areas: "galeria" "compra";
 }
-.cabecera-ficha { grid-area: cabecera; display: grid; gap: 10px; }
-.cabecera-ficha h1 { margin: 0; }
 .chips-ficha { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0; }
 .ficha-galeria { grid-area: galeria; min-width: 0; }
 .ficha-galeria .galeria-principal img { border-radius: 16px; }
 .panel-compra { grid-area: compra; min-width: 0; }
 @media (min-width: 880px) {
   .ficha-subasta {
-    grid-template-columns: minmax(0, 1.2fr) minmax(360px, 1fr); grid-template-rows: auto 1fr;
-    grid-template-areas: "galeria cabecera" "galeria compra"; gap: 18px 56px; align-items: start;
+    grid-template-columns: minmax(0, 1.2fr) minmax(360px, 1fr);
+    grid-template-areas: "galeria compra"; gap: 18px 56px; align-items: start;
   }
   .panel-compra { position: sticky; top: 16px; }
 }
@@ -789,8 +782,6 @@ body:has(.ficha-subasta) { background: var(--superficie); }
   background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio-superficie);
 }
 .confirmacion > * { margin: 0; }
-.confirmacion h1 { font-size: clamp(1.4rem, 1.2rem + 1vw, 1.8rem); }
-.confirmacion .asunto { font-size: 1.05rem; }
 .bloque-monto { padding: 14px 16px; background: var(--fondo); border-radius: var(--radio-control); }
 .bloque-monto p { margin: 0; }
 .bloque-monto .precio { font-size: clamp(2rem, 1.7rem + 1.4vw, 2.5rem); }
@@ -828,11 +819,10 @@ body:has(.ficha-subasta) { background: var(--superficie); }
 @media (min-width: 760px) { .encabezado .contenedor:has(.boton-registro) { padding-block: 8px; } }
 
 /* Sin sesión: hero oscuro a todo el ancho (texto y foto); nunca se muestran subastas. El fondo llega a los
-   bordes de la ventana con la misma sombra de expansión recortada que la banda del buscador. */
+   bordes de la ventana con la misma imagen de borde que la banda (sin costuras de un píxel). */
 .portada-hero {
-  display: grid; gap: 32px; align-items: center; padding-block: 40px 44px;
-  color: var(--sobre-oscuro); background: var(--fondo-oscuro);
-  box-shadow: 0 0 0 100vmax var(--fondo-oscuro); clip-path: inset(0 -100vmax);
+  display: grid; gap: 32px; align-items: center; padding-block: 40px 44px; color: var(--sobre-oscuro);
+  border-image: linear-gradient(var(--fondo-oscuro), var(--fondo-oscuro)) fill 0 / 0 / 0 100vmax;
 }
 main > .portada-hero:first-child { margin-top: -24px; }
 .hero-texto { display: grid; gap: 16px; justify-items: start; }
@@ -879,9 +869,8 @@ main > .portada-hero:first-child { margin-top: -24px; }
 /* «Cómo funciona» en franja oscura a todo el ancho (misma tinta y misma técnica que el hero): número grande
    en oro arriba, una línea fina y el texto claro debajo. */
 .franja-oscura {
-  margin-top: 48px; padding-block: 48px 56px;
-  color: var(--sobre-oscuro); background: var(--fondo-oscuro);
-  box-shadow: 0 0 0 100vmax var(--fondo-oscuro); clip-path: inset(0 -100vmax);
+  margin-top: 48px; padding-block: 48px 56px; color: var(--sobre-oscuro);
+  border-image: linear-gradient(var(--fondo-oscuro), var(--fondo-oscuro)) fill 0 / 0 / 0 100vmax;
 }
 .portada-seccion.franja-oscura > h2 { margin-bottom: 24px; font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); }
 .franja-oscura .pasos { gap: 28px; }
@@ -914,11 +903,14 @@ main > .franja-clara:last-child { margin-bottom: -56px; }
 .reglas-portada { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 @media (min-width: 760px) { .reglas-portada { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; } }
 .reglas-portada li { padding-top: 12px; border-top: 1px solid var(--borde); font-size: 1.05rem; font-weight: 600; }
-/* Con sesión: píldora de búsqueda cerrada [lupa · texto | Buscar] que envía al buscador (CU-08). */
-.buscador-inicio { display: grid; grid-template-columns: minmax(0, 1fr) auto; max-width: 680px; margin: 4px 0 16px; }
+/* Con sesión: píldora de búsqueda cerrada [lupa · texto | Buscar] que envía al buscador (CU-08). Va en claro bajo
+   la banda, al ancho de la rejilla de categorías y más alta que la del listado: es la entrada principal del panel. */
+.buscador-inicio { display: grid; grid-template-columns: minmax(0, 1fr) auto; margin: 0 0 24px; }
 .buscador-inicio > div { margin: 0; }
+.buscador-inicio .seg-texto::before { left: 20px; }
+.buscador-inicio .seg-texto input { min-height: 60px; padding-left: 52px; font-size: 1.125rem; }
 .buscador-inicio .boton-buscar {
-  min-height: 52px; padding: 0 22px;
+  min-height: 60px; padding: 0 32px; font-size: 1.05rem;
   border: 2px solid var(--texto); border-left: 0; border-radius: 0 var(--radio-pildora) var(--radio-pildora) 0;
 }
 .buscador-inicio .boton-buscar:active { border-color: var(--texto); }
@@ -955,15 +947,63 @@ main > .franja-clara:last-child { margin-bottom: -56px; }
   .nombre-categoria { left: 10px; right: 10px; bottom: 8px; font-size: 1rem; }
 }
 /* Con sesión: una tarjeta por rol, con el mismo filo y comportamiento que las tarjetas de subasta. */
-.saludo { color: var(--texto-suave); margin-bottom: 16px; }
 .rejilla-roles .tarjeta-rol { gap: 6px; padding: 20px; }
-.tarjeta-rol .titulo-tarjeta { font-size: 1.2rem; font-weight: 700; }
+/* Cada tarjeta es un enlace completo: ícono del menú (ir-*) en oro de texto, título, descripción y, abajo,
+   el pendiente como lo más visible (contador grande en Archivo). */
+.tarjeta-rol .titulo-tarjeta { display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 700; }
+.tarjeta-rol .titulo-tarjeta::before { background: var(--oro-texto); }
 .tarjeta-rol > .suave { margin: 0; }
-.tarjeta-rol .pendientes-tarjeta { font-weight: 600; color: var(--texto); }
-.tarjeta-rol .pendientes-tarjeta.suave { font-weight: 400; color: var(--texto-suave); }
+.tarjeta-rol .pendientes-tarjeta { margin-top: auto; padding-top: 14px; font-size: 1.05rem; font-weight: 700; color: var(--texto); line-height: 2.4; }
+.tarjeta-rol .pendientes-tarjeta .contador {
+  margin-right: 8px; padding: 0 10px; min-width: 1.6em; font-family: var(--fuente-titulos); font-stretch: 87.5%;
+  font-size: 1.5rem; line-height: 1.4; vertical-align: -.1em;
+}
+.tarjeta-rol .pendientes-tarjeta.suave { font-size: 1rem; font-weight: 400; color: var(--texto-suave); line-height: 1.9; }
 @media (hover: hover) and (pointer: fine) {
   .tarjeta-rol:hover .titulo-tarjeta { text-decoration: underline; text-underline-offset: .15em; }
 }
+
+/* ════ Banda de encabezado (componente) ════
+   La tinta del hero en la cabecera de cada pantalla del comprador y de cuenta: h1 en blanco, una línea de
+   contexto en gris claro (opcional) y, si la pantalla tiene una acción principal propia, esa acción en oro.
+   Debajo, el contenido sigue en claro. Va en {% block banda %} de base.html, antes de los mensajes, así que
+   siempre queda pegada al encabezado. La tinta llega a todo el ancho con una imagen de borde que sale 100vmax a
+   los lados: se pinta de una vez, así que con alturas fraccionarias no aparece una línea clara en el borde
+   (pasaba con fondo + sombra de expansión, que se redondean distinto). */
+.banda {
+  display: grid; gap: 14px; margin: -24px 0 24px; padding-block: 28px 32px; color: var(--sobre-oscuro);
+  border-image: linear-gradient(var(--fondo-oscuro), var(--fondo-oscuro)) fill 0 / 0 / 0 100vmax;
+}
+.banda > *, .banda-texto > * { margin: 0; }
+.banda-texto { display: grid; gap: 8px; min-width: 0; }
+.banda h1 { color: var(--sobre-oscuro); }
+.banda-contexto { max-width: 62ch; color: var(--sobre-oscuro-suave); }
+.banda-contexto strong { color: var(--sobre-oscuro); }
+.banda a:not(.boton) { color: var(--sobre-oscuro); }
+.banda :focus-visible { outline-color: var(--oro); }
+.banda .migas { margin: -10px 0 -6px; }
+.banda-accion form { margin: 0; }
+/* La franja blanca del buscador va justo debajo de la banda. */
+.banda:has(+ .busqueda) { margin-bottom: 0; }
+/* Sellos sobre tinta: el sólido de tinta se invierte a contorno blanco para no desaparecer. */
+.banda .sello-definitivo { background: transparent; border-color: var(--sobre-oscuro); color: var(--sobre-oscuro); }
+/* Ficha: categoría en texto, chip de tipo y sello de estado en una línea. */
+.banda .chips-ficha { gap: 8px 10px; }
+@media (min-width: 760px) {
+  .banda { grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 32px; padding-block: 36px 40px; }
+  .banda > :not(.banda-texto, .banda-accion) { grid-column: 1 / -1; }
+}
+/* Alineada con la tarjeta de «Revisa y confirma» y con las pantallas de cuenta. */
+.banda-estrecha { max-width: 560px; margin-inline: auto; }
+.banda ~ .confirmacion { margin-top: 0; }
+/* Alineada con las tarjetas estrechas (.estrecho): cuenta, formularios de artículo y propuestas. */
+.banda-cuenta, .banda-angosta { max-width: 460px; margin-inline: auto; }
+
+/* Entrar, código y registro: el formulario en una columna estrecha, alineada con su banda. */
+.cuenta { max-width: 460px; margin-inline: auto; }
+.tarjeta-cuenta { margin: 0; }
+.tarjeta-cuenta form { margin-bottom: 16px; }
+@media (min-width: 560px) { .tarjeta-cuenta { padding: 32px; } }
 
 /* ════ Pantallas de trabajo: bandejas del gestor y del moderador, artículos del vendedor, historial ════ */
 /* La tabla llega a los bordes de su tarjeta; filas de 48 px o más, líneas entre filas y cifras a la derecha. */
@@ -976,7 +1016,7 @@ main > .franja-clara:last-child { margin-bottom: -56px; }
 /* Lo mismo para el enlace «Entrar»/«Regístrate» al pie de los formularios de cuenta
    y para el título enlazado que abre una tarjeta (por ejemplo, cada puja de «Mi historial»)
    y para el enlace dentro de un dato (el vendedor en la ficha del moderador). */
-main > .tarjeta > p.suave > a,
+main > .tarjeta > p.suave > a, .tarjeta-cuenta > p.suave > a,
 main > .tarjeta > p:first-child > a:first-child,
 dl.datos dd > a { display: inline-block; padding-block: 13px; margin-block: -13px; }
 @media (hover: hover) and (pointer: fine) { .tabla-caja tbody tr:hover { background: var(--velo); } }
@@ -990,7 +1030,7 @@ dl.datos dd > a { display: inline-block; padding-block: 13px; margin-block: -13p
   .tabla-caja table.apilada td.celda-ancha[data-etiqueta] { padding-left: 0; }
 }
 /* Secciones de una bandeja: el título de cada lista con aire suficiente. */
-main h1 + h2, main .cabecera-pagina + h2 { margin-top: 8px; }
+main h1 + h2, main > .banda + h2 { margin-top: 8px; }
 main > h2 { margin-top: 32px; }
 
 /* ════ Íconos ════
@@ -998,7 +1038,7 @@ main > h2 { margin-top: 32px; }
    Son seudoelementos sin texto: los lectores de pantalla no los anuncian, y siempre van junto a una palabra. */
 .mensaje::before, .tiempo::before, .sello::before, .errorlist li::before,
 .seg-texto::before, .vacio::before, .menu a[class^="ir-"]::before, .salir button::before,
-.chip-categoria::before, .filtro-activo::after, .pujas::before,
+.chip-categoria::before, .filtro-activo::after, .pujas::before, .tarjeta-rol .titulo-tarjeta::before,
 .accion-puja .boton::before, .boton-ancho-sec::before, .celda-accion .boton::before,
 .portada-hero .acciones .boton:not(.secundario)::before, .pasos h3::before, .lista-tipos dt::before, .aviso .titulo-tarjeta::before,
 label[for="id_fotografias"]::before {
