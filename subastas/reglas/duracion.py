@@ -6,6 +6,8 @@ from .estados import EstadoArticulo
 # S-14
 DURACION_MINIMA_HORAS = 1
 DURACION_MAXIMA_HORAS = 30 * 24
+# S-38: el intervalo de la holandesa no pasa de la duración máxima; uno mayor nunca bajaría el precio.
+INTERVALO_HOLANDESA_MAXIMO_MIN = DURACION_MAXIMA_HORAS * 60
 
 # El artículo ya fue «recibido y analizado» cuando está en alguno de estos estados.
 ESTADOS_ANALIZADOS = frozenset({EstadoArticulo.VALUADO, EstadoArticulo.SIN_VENDER})

@@ -1,9 +1,16 @@
 {% extends "subastas/base.html" %}
 {% load humanize %}
 {% block titulo %}Pendientes del gestor · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda">
+  <div class="banda-texto">
+    <h1>Pendientes del gestor</h1>
+    <p class="banda-contexto">{% if pendientes_rol.gestor %}{{ pendientes_rol.gestor_articulos }} artículo{{ pendientes_rol.gestor_articulos|pluralize }} por revisar · {{ pendientes_rol.gestor_propuestas }} propuesta{{ pendientes_rol.gestor_propuestas|pluralize }} por validar{% else %}Sin pendientes.{% endif %}</p>
+  </div>
+</header>
+{% endblock %}
 {% block contenido %}
-<h1>Pendientes del gestor</h1>
-<h2>Artículos por revisar (CU-06)</h2>
+<h2>Artículos por revisar</h2>
 {% if articulos %}
 <div class="tarjeta tabla-caja">
   <table class="apilada">
@@ -22,7 +29,7 @@
 </div>
 {% else %}<p class="vacio">No hay artículos por revisar.</p>{% endif %}
 
-<h2>Propuestas de subasta por validar (CU-07)</h2>
+<h2>Propuestas de subasta por validar</h2>
 {% if propuestas %}
 <div class="tarjeta tabla-caja">
   <table class="apilada">
@@ -33,7 +40,7 @@
         <td class="celda-principal"><a href="{% url 'gestor_propuesta' subasta.pk %}">{{ subasta.articulo.titulo }}</a><br><span class="suave">{{ subasta.articulo.vendedor }}</span></td>
         <td data-etiqueta="Tipo">{{ subasta.get_tipo_display }}</td>
         <td class="numero" data-etiqueta="Duración">{{ subasta.duracion_horas }} h</td>
-        <td class="numero" data-etiqueta="Precio de salida">{{ subasta.precio_salida|intcomma }}</td>
+        <td class="numero" data-etiqueta="Precio de salida">{{ subasta.precio_salida|intcomma }} ficha{{ subasta.precio_salida|pluralize }}</td>
       </tr>
     {% endfor %}
     </tbody>

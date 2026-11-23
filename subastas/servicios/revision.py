@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 from .. import eventos, integraciones, reloj
 from ..mensajes import ErrorDeNegocio
@@ -41,7 +42,7 @@ def _registrar_revision(articulo, gestor, etapa, decision, observaciones) -> Non
 @transaction.atomic
 def aprobar_articulo(*, gestor, articulo_id: int, observaciones: str = "") -> Articulo:
     cuentas.exigir_rol(gestor, Rol.GESTOR)
-    articulo = Articulo.objects.select_related("categoria", "vendedor").get(pk=articulo_id)
+    articulo = get_object_or_404(Articulo.objects.select_related("categoria", "vendedor"), pk=articulo_id)
     _exigir_pendiente_de_revision(articulo, EstadoArticulo.EN_VALUACION)
     if articulo.categoria.requiere_valuacion:
         cambiar_estado_articulo(articulo, EstadoArticulo.EN_VALUACION)
@@ -93,7 +94,7 @@ def solicitar_valuacion(articulo: Articulo) -> Valuacion:
 def rechazar_articulo(*, gestor, articulo_id: int, motivo: str) -> Articulo:
     cuentas.exigir_rol(gestor, Rol.GESTOR)
     motivo = _exigir_motivo(motivo)
-    articulo = Articulo.objects.select_related("vendedor").get(pk=articulo_id)
+    articulo = get_object_or_404(Articulo.objects.select_related("vendedor"), pk=articulo_id)
     _exigir_pendiente_de_revision(articulo, EstadoArticulo.RECHAZADO)
     cambiar_estado_articulo(articulo, EstadoArticulo.RECHAZADO)
     _registrar_revision(articulo, gestor, RevisionGestor.Etapa.DATOS, Decision.RECHAZADO, motivo)
@@ -105,7 +106,7 @@ def rechazar_articulo(*, gestor, articulo_id: int, motivo: str) -> Articulo:
 @transaction.atomic
 def validar_duracion(*, gestor, subasta_id: int) -> Subasta:
     cuentas.exigir_rol(gestor, Rol.GESTOR)
-    subasta = Subasta.objects.select_related("articulo__vendedor").get(pk=subasta_id)
+    subasta = get_object_or_404(Subasta.objects.select_related("articulo__vendedor"), pk=subasta_id)
     instante = reloj.ahora()
     if subasta.estado == EstadoSubasta.PROPUESTA:
         # S-10
@@ -128,7 +129,7 @@ def validar_duracion(*, gestor, subasta_id: int) -> Subasta:
 def rechazar_duracion(*, gestor, subasta_id: int, motivo: str) -> Subasta:
     cuentas.exigir_rol(gestor, Rol.GESTOR)
     motivo = _exigir_motivo(motivo)
-    subasta = Subasta.objects.select_related("articulo__vendedor").get(pk=subasta_id)
+    subasta = get_object_or_404(Subasta.objects.select_related("articulo__vendedor"), pk=subasta_id)
     cambiar_estado_subasta(subasta, EstadoSubasta.RECHAZADA)
     cambiar_estado_articulo(subasta.articulo, EstadoArticulo.VALUADO)
     _registrar_revision(

@@ -1,11 +1,16 @@
 {% extends "subastas/base.html" %}
 {% load humanize %}
 {% block titulo %}Mis artículos · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda">
+  <div class="banda-texto">
+    <h1>Mis artículos</h1>
+    <p class="banda-contexto">{% if pendientes_rol.vendedor %}{{ pendientes_rol.vendedor }} artículo{{ pendientes_rol.vendedor|pluralize }} requiere{{ pendientes_rol.vendedor|pluralize:"n" }} tu acción{% else %}Sin pendientes.{% endif %}</p>
+  </div>
+  <div class="banda-accion"><a class="boton" href="{% url 'registrar_articulo' %}">Registrar artículo</a></div>
+</header>
+{% endblock %}
 {% block contenido %}
-<div class="acciones cabecera-pagina">
-  <h1>Mis artículos</h1>
-  <a class="boton" href="{% url 'registrar_articulo' %}">Registrar artículo</a>
-</div>
 {% if por_atender %}
 <section class="tarjeta por-atender-lista" aria-labelledby="titulo-por-atender">
   <h2 id="titulo-por-atender">Requieren tu acción</h2>

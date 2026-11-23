@@ -1,11 +1,18 @@
 {% extends "subastas/base.html" %}
 {% load humanize %}
 {% block titulo %}Proponer subasta · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda banda-angosta">
+  <p class="migas"><a href="{% url 'detalle_articulo' articulo.pk %}">← Volver al artículo</a></p>
+  <div class="banda-texto">
+    <h1>Proponer subasta</h1>
+    <p class="banda-contexto"><strong>{{ articulo.titulo }}</strong><br>
+      Precio mínimo avalado: {{ precio_minimo|intcomma }} fichas. La subasta arranca en ese precio.</p>
+  </div>
+</header>
+{% endblock %}
 {% block contenido %}
 <div class="tarjeta estrecho">
-  <h1>Proponer subasta</h1>
-  <p><strong>{{ articulo.titulo }}</strong><br>
-    <span class="suave">Precio mínimo avalado: {{ precio_minimo|intcomma }} fichas. La subasta arranca en ese precio.</span></p>
   {% if elegir_tipo %}
   <p class="suave">Paso 1 de 2: el tipo de subasta. Después llenas solo los datos de ese tipo.</p>
   <form method="get">
@@ -13,8 +20,8 @@
       <legend>¿Qué tipo de subasta elijo?</legend>
       {% for t in tipos %}
       <label class="opcion-tipo">
-        <input type="radio" name="tipo" value="{{ t.codigo }}" required>
-        <span><strong>{{ t.nombre }}</strong><span class="suave">{{ t.descripcion }}</span></span>
+        <input type="radio" name="tipo" value="{{ t.codigo }}" required aria-labelledby="nombre-tipo-{{ forloop.counter }}" aria-describedby="descripcion-tipo-{{ forloop.counter }}">
+        <span><strong id="nombre-tipo-{{ forloop.counter }}">{{ t.nombre }}</strong><span class="suave" id="descripcion-tipo-{{ forloop.counter }}">{{ t.descripcion }}</span></span>
       </label>
       {% endfor %}
     </fieldset>

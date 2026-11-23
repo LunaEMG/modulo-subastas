@@ -25,7 +25,7 @@
         <a class="ir-avisos" href="{% url 'avisos' %}"{% if actual.avisos %} aria-current="{{ actual.avisos }}"{% endif %}>Avisos{% if avisos_sin_leer %} <span class="contador">{{ avisos_sin_leer }}<span class="solo-lector"> pendientes</span></span>{% endif %}</a>
       {% else %}{% block menu_visitante %}
         <a class="ir-entrar" href="{% url 'entrar' %}"{% if actual.entrar %} aria-current="{{ actual.entrar }}"{% endif %}>Entrar</a>
-        <a class="ir-registro" href="{% url 'registro' %}"{% if actual.registro %} aria-current="{{ actual.registro }}"{% endif %}>Registrarse</a>
+        <a class="ir-registro" href="{% url 'registro' %}"{% if actual.registro %} aria-current="{{ actual.registro }}"{% endif %}>Crear cuenta</a>
       {% endblock %}{% endif %}
     </nav>
     {% if user.is_authenticated %}
@@ -36,6 +36,10 @@
   </div>
 </header>
 <main class="contenedor" id="contenido" tabindex="-1">
+  {% comment %}Banda de encabezado oscura (.banda): h1 en blanco, línea de contexto opcional (.banda-contexto) y, si la pantalla
+     tiene una acción principal propia, esa acción en oro (.banda-accion). Va antes de los mensajes para quedar pegada al
+     encabezado. Vacía por defecto: las pantallas que no la definen no cambian.{% endcomment %}
+  {% block banda %}{% endblock %}
   {% if messages %}
   {# Los errores se anuncian de inmediato (alert); las confirmaciones, sin interrumpir (status). #}
   <ul class="mensajes" role="alert">

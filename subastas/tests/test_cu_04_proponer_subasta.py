@@ -88,3 +88,39 @@ class CU04ProponerSubasta(PruebaSubastas):
         self.assertContains(respuesta, 'name="precio_reserva"')
         self.assertNotContains(respuesta, 'name="holandesa_decremento"')
         self.assertFalse(Subasta.objects.exists())
+
+    def test_s38_un_intervalo_holandes_enorme_es_error_de_formulario(self):
+        """S-38 Un intervalo de la holandesa mayor a 43,200 minutos (como 10^20) se rechaza en el formulario con ERR-42, sin error del servidor."""
+        url = reverse("proponer_subasta", args=[self.articulo.pk])
+        datos = {"tipo": "HOLANDESA", "duracion_horas": "48", "holandesa_precio_inicial": "5000", "holandesa_decremento": "100"}
+        respuesta = self.client.post(url, {**datos, "holandesa_intervalo_min": str(10**20)})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "ERR-42")
+        self.assertContains(respuesta, "43,200 minutos")
+        self.assertFalse(Subasta.objects.exists())
+        self.client.post(url, {**datos, "holandesa_intervalo_min": "43200"})
+        self.assertTrue(Subasta.objects.exists())
+
+    def test_abrir_la_propuesta_sin_valuacion_regresa_a_la_ficha_sin_err_04(self):
+        """Abrir por su dirección la propuesta de un artículo que aún no se valúa regresa a su ficha en «Mis artículos», sin ERR-04."""
+        pendiente = self.registrar_articulo()
+        respuesta = self.client.get(reverse("proponer_subasta", args=[pendiente.pk]), follow=True)
+        self.assertRedirects(respuesta, reverse("detalle_articulo", args=[pendiente.pk]))
+        self.assertNotContains(respuesta, "ERR-04")
+        # Si el valuador no lo avaló, ERR-04 sí describe la situación y se conserva.
+        self.valuador.avala = False
+        no_avalado = self.articulo_listo()
+        self.assertContains(self.client.get(reverse("proponer_subasta", args=[no_avalado.pk]), follow=True), "ERR-04")
+
+    def test_rnf_02_los_tipos_se_anuncian_por_su_nombre(self):
+        """RNF-02 Cada radio de tipo de subasta se anuncia con su nombre legible y su descripción, no con el valor interno."""
+        html = self.client.get(reverse("proponer_subasta", args=[self.articulo.pk])).content.decode()
+        self.assertIn('value="COMPRA_INMEDIATA" required aria-labelledby="nombre-tipo-', html)
+        self.assertRegex(html, r'<strong id="nombre-tipo-\d">Con compra inmediata</strong>')
+
+    def test_las_pantallas_del_vendedor_llevan_migas_de_regreso(self):
+        """Registrar, corregir y proponer llevan migas de regreso, como «Validar propuesta» del gestor."""
+        self.assertContains(self.client.get(reverse("registrar_articulo")), f'<p class="migas"><a href="{reverse("mis_articulos")}">← Mis artículos</a></p>')
+        regreso = f'<p class="migas"><a href="{reverse("detalle_articulo", args=[self.articulo.pk])}">← Volver al artículo</a></p>'
+        self.assertContains(self.client.get(reverse("proponer_subasta", args=[self.articulo.pk])), regreso)
+        self.assertContains(self.client.get(reverse("corregir_articulo", args=[self.articulo.pk])), regreso)

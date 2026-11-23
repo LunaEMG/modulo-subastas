@@ -3,19 +3,22 @@ import os
 import re
 from html import unescape
 from datetime import timedelta
+from unittest import mock
 from urllib.parse import parse_qs, quote
 
 from django.contrib.staticfiles import finders
 from django.template import Context, Template
+from django.test import Client, RequestFactory, override_settings
 from django.urls import reverse
 from django.utils.text import slugify
+from django.views.defaults import server_error
 
 from subastas import reloj, subastas_tipos as tipos
 from subastas.models import Categoria
 from subastas.reglas.dinero import FICHAS_POR_PESO
 from subastas.reglas.pagos import DIAS_PARA_PAGAR
 
-from .base import INICIO, PruebaSubastas
+from .base import CONTRASENA, INICIO, PruebaSubastas
 
 PLANTILLA = Template(
     "{% load presentacion %}{{ f|tiempo_restante }}|{{ f|es_urgente|yesno:'urgente,normal' }}|{{ f|fecha_completa }}"
@@ -291,7 +294,7 @@ class RNF02Iconos(PruebaSubastas):
         self.assertNotIn("data:image/svg", css)
 
     def test_rnf_02_el_menu_lleva_el_icono_de_cada_destino(self):
-        """RNF-02 Cada enlace del menú lleva la clase de su ícono: sin sesión Entrar y Registrarse (en la portada, Entrar y el botón «Crear cuenta»); con sesión los de su rol."""
+        """RNF-02 Cada enlace del menú lleva la clase de su ícono: sin sesión Entrar y Crear cuenta (en la portada, Entrar y el botón «Crear cuenta»); con sesión los de su rol."""
         html = self.client.get(reverse("entrar")).content.decode()
         self.assertIn('class="ir-entrar" href="{}"'.format(reverse("entrar")), html)
         self.assertIn('class="ir-registro" href="{}"'.format(reverse("registro")), html)
@@ -540,3 +543,106 @@ class RNF02ChipsDeCategoria(PruebaSubastas):
         self.assertNotIn("scale(", css)
         self.assertIn(".tarjeta-categoria:hover { box-shadow: 0 0 0 2px var(--borde-campo); }", css)
 
+
+
+def banda(html):
+    """El bloque <header class="banda…">…</header> de la pantalla, o "" si no lo tiene."""
+    encontrada = re.search(r'<header class="banda[^"]*">(.*?)</header>', html, re.S)
+    return encontrada.group(1) if encontrada else ""
+
+
+class RNF02BandaDeEncabezado(PruebaSubastas):
+    def test_rnf_02_las_pantallas_de_cuenta_llevan_su_h1_en_la_banda(self):
+        """RNF-02 Entrar, código de verificación y registro muestran su h1 y su línea de contexto en la banda oscura,
+        y debajo solo el formulario, sin foto."""
+        entrar = self.client.get(reverse("entrar")).content.decode()
+        self.assertIn("<h1>Entrar</h1>", banda(entrar))
+        self.assertIn("Paso 1 de 2", banda(entrar))
+        self.assertNotIn("cuenta-foto", entrar)
+        self.assertNotIn("cronografo.jpg", entrar)
+        self.assertIn("<h1>Crear cuenta</h1>", banda(self.client.get(reverse("registro")).content.decode()))
+        usuario = self.crear_comprador()
+        codigo = self.client.post(reverse("entrar"), {"correo": usuario.correo, "contrasena": CONTRASENA}, follow=True)
+        self.assertIn("<h1>Código de verificación</h1>", banda(codigo.content.decode()))
+
+    def test_rnf_02_las_pantallas_del_comprador_llevan_su_h1_en_la_banda(self):
+        """RNF-02 Panel, buscador, ficha, historial, avisos y la confirmación del comprador llevan su h1 en la banda;
+        el panel lleva ahí el saludo (su barra de búsqueda va debajo, en claro) y la ficha la categoría y el estado."""
+        subasta = self.subasta_abierta(tipo="COMPRA_INMEDIATA", precio_compra_inmediata=5000)
+        self.client.force_login(self.crear_comprador())
+        panel = self.client.get(reverse("inicio")).content.decode()
+        inicio = banda(panel)
+        self.assertIn("<h1>Casa de Subastas</h1>", inicio)
+        self.assertIn("Hola, Comprador de prueba.", inicio)
+        self.assertNotIn("buscador-inicio", inicio)
+        self.assertIn('<form class="buscador-inicio"', panel)
+        self.assertIn("<h1>Subastas abiertas</h1>", banda(self.client.get(reverse("buscar_subastas")).content.decode()))
+        ficha = banda(self.client.get(reverse("detalle_subasta", args=[subasta.pk])).content.decode())
+        self.assertIn("<h1>Reloj de prueba</h1>", ficha)
+        self.assertIn("<span>Relojes</span>", ficha)
+        self.assertIn('<span class="sello sello-en-curso">Abierta</span>', ficha)
+        self.assertIn("<h1>Mi historial</h1>", banda(self.client.get(reverse("historial")).content.decode()))
+        self.assertIn("<h1>Avisos</h1>", banda(self.client.get(reverse("avisos")).content.decode()))
+        confirmar = banda(self.client.get(reverse("confirmar_compra_inmediata", args=[subasta.pk])).content.decode())
+        self.assertIn("<h1>Revisa y confirma</h1>", confirmar)
+        self.assertIn("<strong>Reloj de prueba</strong>", confirmar)
+
+    def test_rnf_02_el_buscador_sigue_fijo_fuera_de_la_banda(self):
+        """RNF-02 El buscador es una franja clara aparte justo después de la banda (si fuera hijo de la banda, dejaría de quedar fijo)."""
+        self.client.force_login(self.crear_comprador())
+        html = self.client.get(reverse("buscar_subastas")).content.decode()
+        self.assertNotIn('class="busqueda"', banda(html))
+        self.assertRegex(html, r'</header>\s*<div class="busqueda">')
+
+    def test_rnf_02_el_personal_y_sus_confirmaciones_llevan_banda(self):
+        """RNF-02 Las pantallas del vendedor, del gestor y del moderador, y la confirmación del moderador (plantilla
+        compartida, sin monto), llevan su h1 en la banda; las migas de regreso van dentro de la banda."""
+        articulo = self.registrar_articulo()
+        vendedor, gestor, moderador = self.vendedor, self.gestor, self.crear_moderador()
+        self.client.force_login(vendedor)
+        mis_articulos = banda(self.client.get(reverse("mis_articulos")).content.decode())
+        self.assertIn("<h1>Mis artículos</h1>", mis_articulos)
+        self.assertIn('<a class="boton" href="{}">Registrar artículo</a>'.format(reverse("registrar_articulo")), mis_articulos)
+        self.assertIn("<h1>Registrar artículo</h1>", banda(self.client.get(reverse("registrar_articulo")).content.decode()))
+        detalle = banda(self.client.get(reverse("detalle_articulo", args=[articulo.pk])).content.decode())
+        self.assertIn("<h1>Reloj de prueba</h1>", detalle)
+        self.assertIn('<p class="migas"><a href="{}">← Mis artículos</a></p>'.format(reverse("mis_articulos")), detalle)
+        self.client.force_login(gestor)
+        self.assertIn("<h1>Pendientes del gestor</h1>", banda(self.client.get(reverse("gestor_bandeja")).content.decode()))
+        revisar = banda(self.client.get(reverse("gestor_articulo", args=[articulo.pk])).content.decode())
+        self.assertIn("<h1>Reloj de prueba</h1>", revisar)
+        self.assertIn('<p class="migas"><a href="{}">← Pendientes</a></p>'.format(reverse("gestor_bandeja")), revisar)
+        infractor = self.crear_comprador()
+        self.client.force_login(moderador)
+        self.assertIn("<h1>Moderación</h1>", banda(self.client.get(reverse("moderador_bandeja")).content.decode()))
+        self.assertIn("<h1>Reloj de prueba</h1>", banda(self.client.get(reverse("moderador_articulo", args=[articulo.pk])).content.decode()))
+        self.assertIn("<h1>Comprador de prueba</h1>", banda(self.client.get(reverse("moderador_usuario", args=[infractor.pk])).content.decode()))
+        confirmacion = self.client.post(reverse("confirmar_sancion", args=[infractor.pk]), {"motivo": "Spam", "nivel": "1"})
+        html = banda(confirmacion.content.decode())
+        self.assertIn("<h1>Revisa y confirma</h1>", html)
+        self.assertIn("<strong>Comprador de prueba</strong>", html)
+
+
+class RNF02PaginasDeError(PruebaSubastas):
+    @override_settings(DEBUG=False)
+    def test_rnf_02_la_404_es_propia_con_banda_y_enlace_a_inicio(self):
+        """RNF-02 Una dirección que no existe muestra la 404 propia, en español, con banda y enlace al inicio."""
+        respuesta = self.client.get("/no-existe/")
+        self.assertEqual(respuesta.status_code, 404)
+        self.assertTemplateUsed(respuesta, "404.html")
+        self.assertIn("<h1>Página no encontrada</h1>", banda(respuesta.content.decode()))
+        self.assertContains(respuesta, f'<a href="{reverse("inicio")}">Ir al inicio</a>', status_code=404)
+
+    @override_settings(DEBUG=False)
+    def test_rnf_02_la_500_es_autonoma(self):
+        """RNF-02 Un error del servidor muestra la 500 propia, que se pinta sin procesadores de contexto ni base de datos, con los mismos estilos."""
+        cliente = Client(raise_request_exception=False)
+        with mock.patch("subastas.views.general.render", side_effect=RuntimeError("falla simulada")):
+            respuesta = cliente.get(reverse("inicio"))
+        html = respuesta.content.decode()
+        self.assertEqual(respuesta.status_code, 500)
+        self.assertIn("<h1>Algo salió mal</h1>", html)
+        self.assertIn("subastas/estilos.css", html)
+        self.assertIn('<a href="/">Ir al inicio</a>', html)
+        with self.assertNumQueries(0):
+            server_error(RequestFactory().get("/"))

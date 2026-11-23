@@ -16,7 +16,7 @@ class CU10ModificarPuja(PruebaSubastas):
 
     def test_rnf_02_la_ayuda_de_modificar_dice_el_minimo_con_separadores(self):
         """RNF-02 Al modificar su puja el comprador ve el mínimo con separadores de miles."""
-        self.assertContains(self.client.get(self.detalle), "Mínimo 1,201 fichas.")
+        self.assertContains(self.client.get(self.detalle), "Puja mínima 1,201 fichas.")
 
     def test_ca_10_1_subir_la_propia_puja_se_acepta(self):
         """CA-10.1 Subir la propia puja por encima de la anterior se acepta y queda una sola puja activa (MSG-13)."""

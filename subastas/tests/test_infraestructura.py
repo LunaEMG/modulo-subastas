@@ -1,10 +1,12 @@
 """Reloj, servicios externos simulados y catálogos iniciales."""
+import json
 import tempfile
 from datetime import timedelta
 from pathlib import Path
 
 from django.conf import settings
 from django.test import SimpleTestCase, TestCase, override_settings
+from django.urls import reverse
 from django.utils.module_loading import import_string
 
 from subastas import integraciones, reloj
@@ -130,3 +132,18 @@ class CatalogosIniciales(TestCase):
             dict(Categoria.objects.values_list("nombre", "requiere_valuacion")),
             CATEGORIAS_PERMITIDAS,
         )
+
+
+class BandejaSimulada(TestCase):
+    def test_muestra_las_fechas_en_hora_local_y_regresa_al_inicio(self):
+        """La bandeja simulada muestra cada fecha en hora local (dd/mm/AAAA HH:MM) y un enlace de regreso al inicio."""
+        with tempfile.TemporaryDirectory() as carpeta:
+            archivo = Path(carpeta) / "bandeja.jsonl"
+            archivo.write_text(json.dumps({
+                "fecha": "2026-12-01T16:00:00+00:00", "canal": "CORREO", "destino": "ana@prueba.test",
+                "asunto": "Hola", "cuerpo": "Texto",
+            }) + "\n", encoding="utf-8")
+            with override_settings(DEBUG=True, BANDEJA_SIMULADA=archivo):
+                respuesta = self.client.get(reverse("bandeja_simulada"))
+        self.assertContains(respuesta, "· 01/12/2026 10:00</span>")
+        self.assertContains(respuesta, f'<a href="{reverse("inicio")}">← Inicio</a>')

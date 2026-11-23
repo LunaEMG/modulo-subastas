@@ -2,11 +2,15 @@ from django import forms
 
 from .. import subastas_tipos as tipos
 from ..models import Categoria
+from ..reglas.duracion import INTERVALO_HOLANDESA_MAXIMO_MIN
 from .base import FormularioConCatalogo, error_de_formulario
 
 # S-25
 MAXIMO_FOTOGRAFIAS = 8
 TAMANO_MAXIMO_MB = 5
+# S-39
+LONGITUD_MAXIMA_DESCRIPCION = 2000
+LONGITUD_MAXIMA_MOTIVO = 1000
 
 
 class EntradaVariasImagenes(forms.ClearableFileInput):
@@ -39,7 +43,9 @@ class FormularioArticulo(FormularioConCatalogo):
         empty_label="Elige una categoría",
     )
     titulo = forms.CharField(label="Título", max_length=120)
-    descripcion = forms.CharField(label="Descripción", widget=forms.Textarea, required=False)
+    descripcion = forms.CharField(
+        label="Descripción", widget=forms.Textarea, required=False, max_length=LONGITUD_MAXIMA_DESCRIPCION
+    )
     anio = forms.IntegerField(label="Año", required=False)
     costo_salida = forms.IntegerField(
         label="Costo de salida (fichas)",
@@ -97,6 +103,15 @@ class FormularioPropuesta(FormularioConCatalogo):
         "holandesa_intervalo_min",
     )
 
+    def clean_holandesa_intervalo_min(self):
+        intervalo = self.cleaned_data.get("holandesa_intervalo_min")
+        if intervalo is not None and intervalo > INTERVALO_HOLANDESA_MAXIMO_MIN:
+            raise error_de_formulario(
+                "ERR-42",
+                detalle=f"el intervalo no puede pasar de {INTERVALO_HOLANDESA_MAXIMO_MIN:,} minutos (30 días)",
+            )
+        return intervalo
+
     def mostrar_solo(self, tipo) -> None:
         """Paso 2 de la propuesta: deja visibles solo la duración y los parámetros de `tipo`.
         Solo cambia lo que se pinta; la validación sigue en el servicio y en la estrategia."""
@@ -108,7 +123,12 @@ class FormularioPropuesta(FormularioConCatalogo):
 
 
 class FormularioMotivo(FormularioConCatalogo):
-    motivo = forms.CharField(label="Motivo", widget=forms.Textarea(attrs={"rows": 3}), required=False)
+    motivo = forms.CharField(
+        label="Motivo",
+        widget=forms.Textarea(attrs={"rows": 3}),
+        required=False,
+        max_length=LONGITUD_MAXIMA_MOTIVO,
+    )
 
 
 class FormularioMonto(FormularioConCatalogo):

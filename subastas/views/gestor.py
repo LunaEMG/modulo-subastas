@@ -7,7 +7,7 @@ from ..forms.articulos import FormularioMotivo
 from ..models import Articulo, Rol, Subasta
 from ..reglas.estados import EstadoArticulo, EstadoSubasta
 from ..servicios import consultas, moderacion, revision
-from .comunes import avisar, requiere_rol
+from .comunes import avisar, motivo_enviado, requiere_rol
 
 
 @requiere_rol(Rol.GESTOR)
@@ -41,7 +41,7 @@ def revisar_articulo(request, articulo_id):
 @requiere_rol(Rol.GESTOR)
 def aprobar_articulo(request, articulo_id):
     articulo = revision.aprobar_articulo(
-        gestor=request.user, articulo_id=articulo_id, observaciones=request.POST.get("motivo", "")
+        gestor=request.user, articulo_id=articulo_id, observaciones=motivo_enviado(request)
     )
     avisar(request, "MSG-08", estado=articulo.get_estado_display())
     return redirect("gestor_bandeja")
@@ -51,7 +51,7 @@ def aprobar_articulo(request, articulo_id):
 @requiere_rol(Rol.GESTOR)
 def rechazar_articulo(request, articulo_id):
     revision.rechazar_articulo(
-        gestor=request.user, articulo_id=articulo_id, motivo=request.POST.get("motivo", "")
+        gestor=request.user, articulo_id=articulo_id, motivo=motivo_enviado(request)
     )
     avisar(request, "MSG-09")
     return redirect("gestor_bandeja")
@@ -86,7 +86,7 @@ def validar_duracion(request, subasta_id):
 @requiere_rol(Rol.GESTOR)
 def rechazar_duracion(request, subasta_id):
     revision.rechazar_duracion(
-        gestor=request.user, subasta_id=subasta_id, motivo=request.POST.get("motivo", "")
+        gestor=request.user, subasta_id=subasta_id, motivo=motivo_enviado(request)
     )
     avisar(request, "MSG-11")
     return redirect("gestor_bandeja")

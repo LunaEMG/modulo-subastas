@@ -10,7 +10,7 @@ from ..models import Articulo, Rol
 from ..reglas import sanciones as reglas_sanciones
 from ..reglas.estados import ESTADOS_PREVIOS_A_PUBLICAR, EstadoArticulo
 from ..servicios import consultas, cuentas, moderacion
-from .comunes import avisar, requiere_rol
+from .comunes import avisar, motivo_enviado, requiere_rol
 
 
 @requiere_rol(Rol.MODERADOR)
@@ -65,7 +65,7 @@ def aprobar_contenido(request, articulo_id):
 @requiere_rol(Rol.MODERADOR)
 def rechazar_contenido(request, articulo_id):
     moderacion.rechazar_contenido(
-        moderador=request.user, articulo_id=articulo_id, motivo=request.POST.get("motivo", "")
+        moderador=request.user, articulo_id=articulo_id, motivo=motivo_enviado(request)
     )
     avisar(request, "MSG-18")
     return redirect("moderador_bandeja")
@@ -75,7 +75,7 @@ def rechazar_contenido(request, articulo_id):
 @requiere_rol(Rol.MODERADOR)
 def retirar_publicacion(request, articulo_id):
     moderacion.retirar_publicacion(
-        moderador=request.user, articulo_id=articulo_id, motivo=request.POST.get("motivo", "")
+        moderador=request.user, articulo_id=articulo_id, motivo=motivo_enviado(request)
     )
     avisar(request, "MSG-19")
     return redirect("moderador_bandeja")
@@ -98,6 +98,8 @@ def usuario(request, usuario_id):
             "sanciones": moderacion.historial_de_sanciones(sancionado),
             "nivel": nivel,
             "formulario": FormularioMotivo(),
+            # S-29: al personal de la casa no se le ofrece sancionar.
+            "sancionable": sancionado.tiene_rol(Rol.VENDEDOR) or sancionado.tiene_rol(Rol.COMPRADOR),
         },
     )
 
@@ -108,7 +110,7 @@ def sancionar(request, usuario_id):
     sancion = moderacion.sancionar(
         moderador=request.user,
         usuario_id=usuario_id,
-        motivo=request.POST.get("motivo", ""),
+        motivo=motivo_enviado(request),
         nivel=request.POST.get("nivel") or None,
     )
     avisar(request, "MSG-20", nivel=sancion.nivel, nombre=sancion.usuario.nombre)
@@ -125,7 +127,7 @@ def confirmar_retiro(request, articulo_id):
     subasta = moderacion.subasta_publicada(articulo)
     if request.method != "POST" or subasta is None:
         return redirect("moderador_articulo", articulo_id=articulo_id)
-    motivo = moderacion.exigir_motivo(request.POST.get("motivo", ""))
+    motivo = moderacion.exigir_motivo(motivo_enviado(request))
     pujas_activas = consultas.resumen_subasta(subasta)["numero_pujas"]
     return render(
         request,
@@ -160,7 +162,7 @@ def confirmar_sancion(request, usuario_id):
         nivel = None
     if request.method != "POST" or nivel not in reglas_sanciones.DESCRIPCION_POR_NIVEL:
         return redirect("moderador_usuario", usuario_id=usuario_id)
-    motivo = moderacion.exigir_motivo(request.POST.get("motivo", ""))
+    motivo = moderacion.exigir_motivo(motivo_enviado(request))
     moderacion.validar_sancion(sancionado, nivel)
     instante = reloj.ahora()
     fin = reglas_sanciones.calcular_fecha_fin(nivel, instante)

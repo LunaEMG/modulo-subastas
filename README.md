@@ -21,6 +21,8 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
+`pip install` descarga las dependencias, así que necesita internet. Después de instalarlas, el sistema funciona sin conexión.
+
 ```bash
 cp .env.example .env
 ```
@@ -69,7 +71,7 @@ Todos usan la contraseña `Subastas2026`.
 | Silla ejecutiva | Rechazado | CU-03, corregir y reenviar |
 | Reloj imitación | No avalado | RN-04: el valuador simulado rechaza las réplicas |
 | Consola portátil | Valuado | CU-04, proponer la subasta |
-| Motocicleta 250 cc | Duración propuesta, sin aprobación del moderador | CU-07 muestra ERR-48 hasta que el moderador aprueba (CU-18) |
+| Motocicleta 250 cc | Duración propuesta, sin aprobación del moderador | CU-07 muestra el sello «Sin aprobación del moderador» y rechaza publicarla con ERR-48 hasta que el moderador aprueba (CU-18) |
 | Sedán 2015 | Subasta **inglesa** abierta, dos pujas | CU-09 a CU-11 |
 | Reloj cronógrafo | Subasta **reservada** abierta, una puja que no alcanza la reserva | S-02 |
 | Colección retro | Subasta **holandesa** abierta (el precio baja cada hora) | CU-09, aceptar el precio |
@@ -80,7 +82,7 @@ Las subastas abiertas duran 72 horas desde que se carga el comando. Para ver cie
 
 Cada artículo usa fotos reales de Pexels y Unsplash, reducidas a 800 px y guardadas en `subastas/management/commands/fotos_demo/`; la motocicleta y el cronógrafo traen tres. Autor, enlace y licencia de cada foto están en `fotos_demo/CREDITOS.md`. Si falta una foto, el comando dibuja en su lugar una ilustración con Pillow. Las fotos no se descargan al cargar los datos: ya vienen en el repositorio. `cargar_datos_prueba --redibujar` vuelve a dibujar solo las ilustraciones, sin tocar la base de datos ni las fotos reales. Para pasar de ilustraciones a fotos en datos ya cargados, empieza de cero (ver más abajo). Las tipografías (Archivo y Public Sans, licencia OFL) se sirven desde `subastas/static/subastas/fuentes/`, así que la demostración funciona sin internet.
 
-El inicio de sesión pide un código de 6 dígitos que «llega al móvil». Como el envío real lo hará otro equipo, en modo de desarrollo el código aparece en la **Bandeja simulada** (enlace en el menú superior) y también en la consola donde corre el servidor. Ahí mismo aparecen los correos que envía el Servicio de Notificaciones.
+El inicio de sesión pide un código de 6 dígitos que «llega al móvil». Como el envío real lo hará otro equipo, en modo de desarrollo el código aparece en la **Bandeja simulada** (en el pie de página, menú «Desarrollo») y también en la consola donde corre el servidor. Ahí mismo aparecen los correos que envía el Servicio de Notificaciones.
 
 ## Pruebas
 
@@ -101,6 +103,9 @@ Los archivos de prueba siguen la numeración del documento de requerimientos:
 | `test_flujos_completos.py` | El flujo completo de cada tipo de subasta, del registro al pago o la resubasta |
 | `test_catalogo_mensajes.py` | Todo MSG/ERR usado existe en el catálogo y todo el catálogo se usa |
 | `test_concurrencia_pujas.py` | Dos pujas simultáneas: solo una se acepta |
+| `test_infraestructura.py` | El reloj, los servicios externos simulados, los catálogos iniciales y la bandeja simulada |
+
+La suite completa tiene 399 pruebas.
 
 Para correr solo una regla: `.venv/bin/python manage.py test subastas.tests.test_rn_14_comision`.
 
@@ -220,16 +225,33 @@ Con el servidor corriendo y los usuarios de prueba cargados (cada uno en su prop
 4. **Moderador**: «Moderación» → aprobar el contenido. Sin este paso el gestor recibe `ERR-48`.
 5. **Gestor**: validar la duración; la subasta queda abierta.
 6. **Comprador** y **comprador2**: pujar, modificar o retirar la puja; en «Avisos» aparece quién fue superado.
-7. Adelantar el reloj (`adelantar_reloj --horas 1`) y abrir cualquier página: la subasta se cierra y el ganador recibe el aviso con el plazo de 3 días.
-8. **Comprador ganador**: «Mi historial» → «Pagar». Para ver la resubasta, en lugar de pagar adelanta el reloj `--dias 3` y un minuto más.
+7. Adelantar el reloj (`.venv/bin/python manage.py adelantar_reloj --horas 1`) y abrir cualquier página: la subasta se cierra y el ganador recibe el aviso con el plazo de 3 días.
+8. **Comprador ganador**: «Mi historial» → «Pagar». Para ver la resubasta, en lugar de pagar adelanta el reloj tres días y un minuto: `.venv/bin/python manage.py adelantar_reloj --dias 3 --minutos 1`.
 9. **Moderador**: retirar una publicación activa o sancionar a un participante desde la lista de participantes (14 días, 90 días, baja definitiva).
 
 ## Herramientas de demostración
 
-- **Bandeja simulada** (`/desarrollo/bandeja/`): SMS y correos enviados por los simuladores. Solo existe con `DEBUG`.
+- **Bandeja simulada** (`/desarrollo/bandeja/`, en el pie de página, menú «Desarrollo»): SMS y correos enviados por los simuladores. Solo existe con `DEBUG`.
 - **Adelantar el reloj**: `.venv/bin/python manage.py adelantar_reloj --horas 2` o `--dias 3` hace que el sistema crea que pasó ese tiempo, para mostrar cierres y vencimientos de pago sin esperar. `--reiniciar` regresa al reloj real.
 - **Procesar subastas**: `.venv/bin/python manage.py procesar_subastas` cierra las subastas vencidas y resubasta las adjudicaciones no pagadas. No hace falta en la demostración porque el sistema también lo hace solo cada vez que se abre una página; en producción se programaría con cron.
 
 ## Reiniciar los datos
 
-Para empezar de cero, detén el servidor, borra el archivo `db.sqlite3` y la carpeta `media/`, y repite `migrate` y `cargar_datos_prueba`.
+Para empezar de cero, detén el servidor, borra el archivo `db.sqlite3` y las carpetas `media/` y `var/`, y repite `migrate` y `cargar_datos_prueba`. La carpeta `var/` guarda la bandeja simulada y el reloj adelantado; si prefieres conservar la bandeja, basta con regresar el reloj:
+
+```bash
+.venv/bin/python manage.py adelantar_reloj --reiniciar
+```
+
+## Limitaciones conocidas
+
+Este repositorio es un entorno de demostración para la materia. Funciona para recorrer los casos de uso en una laptop, pero **no está listo para producción**. Antes de ponerlo en un servidor real faltaría resolver lo siguiente:
+
+- **Concurrencia.** Que dos pujas simultáneas no se pisen depende de cómo SQLite bloquea la base de datos. Con un motor como PostgreSQL habría que revisar esos bloqueos.
+- **Archivos estáticos y fotografías.** Los estilos, las tipografías y las fotos de los artículos solo se sirven con `DEBUG=1`. Sin `DEBUG` haría falta un servidor web que los entregue.
+- **Seguridad de la conexión.** No hay HTTPS, las cookies de sesión no se marcan como seguras y no se guarda un registro de actividad del servidor.
+- **Cobro y avisos dentro de la misma operación.** El cobro y los correos se hacen dentro de la transacción de la base de datos: si un servicio externo tarda o falla, la operación completa espera o se deshace.
+- **Intentos de inicio de sesión.** No hay límite de intentos de contraseña por cuenta; solo el código al móvil se anula tras 5 intentos fallidos.
+- **Contraseñas.** Basta con 8 caracteres (S-23).
+- **Fotografías públicas.** Cualquiera que conozca la dirección de una fotografía puede abrirla, aunque no tenga sesión.
+- **Bandeja simulada en la red local.** Con `DEBUG=1` y `runserver 0.0.0.0:8000`, cualquier equipo de la misma red puede abrir la bandeja simulada y leer los códigos de verificación (S-42).

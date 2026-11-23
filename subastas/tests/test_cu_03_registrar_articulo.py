@@ -67,3 +67,13 @@ class CU03RegistrarArticulo(PruebaSubastas):
         self.client.logout()
         respuesta = self.client.get(reverse("mis_articulos"))
         self.assertRedirects(respuesta, reverse("entrar") + "?next=" + reverse("mis_articulos"))
+
+    def test_s39_una_descripcion_demasiado_larga_muestra_err_63(self):
+        """S-39 Una descripción de más de 2,000 caracteres se rechaza en el formulario con ERR-63."""
+        respuesta = self.client.post(reverse("registrar_articulo"), {
+            "categoria": "Relojes", "titulo": "Reloj", "descripcion": "x" * 2001, "anio": "2018",
+            "costo_salida": "1000", "fotografias": [fotografia()],
+        })
+        self.assertContains(respuesta, "ERR-63")
+        self.assertContains(respuesta, 'maxlength="2000"')
+        self.assertFalse(Articulo.objects.exists())

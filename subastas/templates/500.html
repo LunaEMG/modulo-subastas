@@ -1,0 +1,27 @@
+{% load static %}<!doctype html>
+{% comment %}Autónoma: Django la pinta sin procesadores de contexto, así que no extiende base.html, no consulta la
+base de datos ni usa etiquetas propias. Conserva el encabezado y la banda con los mismos estilos.{% endcomment %}
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Error del servidor · Casa de Subastas</title>
+  <link rel="stylesheet" href="{% static 'subastas/estilos.css' %}">
+</head>
+<body>
+<header class="encabezado">
+  <div class="contenedor">
+    <a class="marca" href="/">Casa de Subastas</a>
+  </div>
+</header>
+<main class="contenedor" id="contenido">
+  <header class="banda">
+    <div class="banda-texto">
+      <h1>Algo salió mal</h1>
+      <p class="banda-contexto">Ocurrió un error en el servidor. Intenta de nuevo en unos minutos.</p>
+    </div>
+  </header>
+  <p class="vacio">Si el problema sigue, vuelve a empezar desde el inicio. <a href="/">Ir al inicio</a></p>
+</main>
+</body>
+</html>

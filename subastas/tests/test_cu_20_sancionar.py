@@ -92,3 +92,20 @@ class CU20Sancionar(PruebaSubastas):
         self.assertContains(respuesta, "ERR-16")
         self.assertNotContains(respuesta, "Revisa y confirma")
         self.assertEqual(Sancion.objects.count(), 1)
+
+    def test_la_ficha_del_personal_no_ofrece_sancionar(self):
+        """La ficha de un gestor o moderador no muestra el formulario de sanción (S-29)."""
+        gestor = self.crear_gestor()
+        respuesta = self.client.get(reverse("moderador_usuario", args=[gestor.pk]))
+        self.assertNotContains(respuesta, "Aplicar sanción")
+        self.assertNotContains(respuesta, reverse("confirmar_sancion", args=[gestor.pk]))
+
+    def test_rnf_02_la_moderacion_sin_identificadores_internos(self):
+        """RNF-02 Los títulos de la bandeja y de la ficha de usuario no muestran CU-18, CU-19, CU-20 ni RN-16."""
+        bandeja = self.client.get(reverse("moderador_bandeja")).content.decode()
+        ficha = self.client.get(self.url).content.decode()
+        for codigo in ("CU-18", "CU-19", "CU-20", "RN-16"):
+            self.assertNotIn(codigo, bandeja)
+            self.assertNotIn(codigo, ficha)
+        self.assertIn("<title>Moderación · Casa de Subastas</title>", bandeja)
+        self.assertIn("<h1>Moderación</h1>", bandeja)

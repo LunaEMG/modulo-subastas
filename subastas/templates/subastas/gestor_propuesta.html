@@ -1,21 +1,27 @@
 {% extends "subastas/base.html" %}
 {% load humanize %}
 {% block titulo %}Validar propuesta · Casa de Subastas{% endblock %}
+{% block banda %}
+<header class="banda banda-angosta">
+  <p class="migas"><a href="{% url 'gestor_bandeja' %}">← Pendientes</a></p>
+  <div class="banda-texto">
+    <h1>Validar propuesta</h1>
+    <p class="banda-contexto"><strong>{{ subasta.articulo.titulo }}</strong> de {{ subasta.articulo.vendedor }}</p>
+  </div>
+</header>
+{% endblock %}
 {% block contenido %}
-<p class="migas"><a href="{% url 'gestor_bandeja' %}">← Pendientes</a></p>
-<h1>Propuesta de subasta</h1>
 <div class="tarjeta estrecho">
-  <p><strong>{{ subasta.articulo.titulo }}</strong> <span class="suave">de {{ subasta.articulo.vendedor }}</span></p>
   <dl class="datos">
     <dt>Tipo</dt><dd>{{ tipo.nombre }}</dd>
-    <dt>Duración</dt><dd>{{ subasta.duracion_horas }} horas</dd>
+    <dt>Duración</dt><dd>{{ subasta.duracion_horas }} hora{{ subasta.duracion_horas|pluralize }}</dd>
     <dt>Precio de salida</dt><dd>{{ subasta.precio_salida|intcomma }} fichas</dd>
     {% if subasta.precio_reserva %}<dt>Precio reservado</dt><dd>{{ subasta.precio_reserva|intcomma }} fichas</dd>{% endif %}
     {% if subasta.precio_compra_inmediata %}<dt>Compra inmediata</dt><dd>{{ subasta.precio_compra_inmediata|intcomma }} fichas</dd>{% endif %}
     {% if subasta.holandesa_precio_inicial %}<dt>Precio inicial</dt><dd>{{ subasta.holandesa_precio_inicial|intcomma }} fichas</dd>
     <dt>Baja</dt><dd>{{ subasta.holandesa_decremento|intcomma }} fichas cada {{ subasta.holandesa_intervalo_min }} min</dd>{% endif %}
     <dt>Estado</dt><dd>{{ subasta.get_estado_display }}</dd>
-    <dt>Contenido</dt><dd>{% if contenido_aprobado %}<span class="sello sello-en-curso">Aprobado por el moderador</span>{% else %}<span class="sello sello-detenido sello-largo">Sin aprobación del moderador (no se puede publicar, ERR-48)</span>{% endif %}</dd>
+    <dt>Contenido</dt><dd>{% if contenido_aprobado %}<span class="sello sello-en-curso">Aprobado por el moderador</span>{% else %}<span class="sello sello-detenido">Sin aprobación del moderador</span>{% endif %}</dd>
   </dl>
   {% if pendiente %}
   <form method="post" class="separado" novalidate>{% csrf_token %}

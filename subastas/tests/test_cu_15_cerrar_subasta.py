@@ -1,12 +1,13 @@
 """CU-15 Cerrar subasta y determinar ganador (actor Tiempo)."""
 from io import StringIO
+from unittest import mock
 
 from django.core.management import call_command
 from django.urls import reverse
 
 from subastas.models import Adjudicacion
 from subastas.reglas.estados import EstadoSubasta
-from subastas.servicios import pujas
+from subastas.servicios import cierre, pujas
 
 from .base import PruebaSubastas
 
@@ -46,3 +47,23 @@ class CU15CerrarSubasta(PruebaSubastas):
         self.client.get(reverse("inicio"))
         self.assertTrue(self.comprador.notificaciones.filter(tipo="MSG-37").exists())
         self.assertTrue(self.vendedor.notificaciones.filter(tipo="MSG-38").exists())
+
+    def test_un_error_al_cerrar_una_subasta_no_detiene_a_las_demas(self):
+        """Si cerrar una subasta falla con un error inesperado, las demás se cierran y la página responde 200."""
+        otra = self.subasta_abierta(costo_salida=500, duracion_horas=24)
+        cerrar_real = cierre.cerrar_subasta
+
+        def cerrar_con_falla(subasta_id):
+            if subasta_id == self.subasta.pk:
+                raise RuntimeError("falla simulada")
+            return cerrar_real(subasta_id)
+
+        self.reloj.avanzar(hours=24)
+        with mock.patch.object(cierre, "cerrar_subasta", side_effect=cerrar_con_falla):
+            with self.assertLogs("subastas.servicios.cierre", level="ERROR"):
+                respuesta = self.client.get(reverse("inicio"))
+        self.assertEqual(respuesta.status_code, 200)
+        self.subasta.refresh_from_db()
+        otra.refresh_from_db()
+        self.assertEqual(self.subasta.estado, EstadoSubasta.ABIERTA)
+        self.assertEqual(otra.estado, EstadoSubasta.DESIERTA)

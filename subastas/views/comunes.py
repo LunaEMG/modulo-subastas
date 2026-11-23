@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 
 from .. import mensajes
+from ..forms.articulos import LONGITUD_MAXIMA_MOTIVO, FormularioMotivo
 from ..mensajes import ErrorDeNegocio
 
 
@@ -13,6 +14,14 @@ def avisar(request, codigo: str, **datos) -> None:
 
 def avisar_error(request, error: ErrorDeNegocio) -> None:
     messages.error(request, error.mensaje, extra_tags=error.codigo)
+
+
+def motivo_enviado(request) -> str:
+    """S-39: el motivo llega por POST sin pasar por un formulario validado; aquí se revisa su longitud."""
+    formulario = FormularioMotivo(request.POST)
+    if not formulario.is_valid():
+        raise ErrorDeNegocio("ERR-63", limit_value=LONGITUD_MAXIMA_MOTIVO)
+    return formulario.cleaned_data["motivo"]
 
 
 def requiere_rol(*roles: str):

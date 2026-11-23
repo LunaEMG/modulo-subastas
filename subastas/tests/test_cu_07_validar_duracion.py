@@ -29,7 +29,7 @@ class CU07ValidarDuracion(PruebaSubastas):
 
     def test_ca_07_2_sin_aprobacion_del_moderador_no_se_publica_err_48(self):
         """CA-07.2 Sin la aprobación del moderador la pantalla lo advierte y publicar se rechaza con ERR-48 (S-10)."""
-        self.assertContains(self.client.get(self.url), "ERR-48")
+        self.assertContains(self.client.get(self.url), "<span class=\"sello sello-detenido\">Sin aprobación del moderador</span>")
         respuesta = self.client.post(reverse("validar_duracion", args=[self.subasta.pk]), follow=True, **self.desde(self.url))
         self.assertContains(respuesta, "ERR-48")
         self.subasta.refresh_from_db()
@@ -68,3 +68,19 @@ class CU07ValidarDuracion(PruebaSubastas):
         self.assertContains(pantalla, "falta que el moderador apruebe el contenido")
         self.aprobar_para_publicar(self.articulo)
         self.assertContains(self.client.get(self.url), "Validar y publicar")
+
+    def test_rnf_02_la_bandeja_y_la_propuesta_sin_identificadores_internos(self):
+        """RNF-02 La bandeja del gestor no muestra CU-06 ni CU-07 en sus títulos y el precio de salida lleva fichas; la duración pluraliza horas."""
+        html = self.client.get(reverse("gestor_bandeja")).content.decode()
+        self.assertNotIn("(CU-06)", html)
+        self.assertNotIn("(CU-07)", html)
+        self.assertIn('data-etiqueta="Precio de salida">1,000 fichas</td>', html)
+        self.assertContains(self.client.get(self.url), "<dd>48 horas</dd>")
+        una_hora = self.proponer(self.articulo_listo(), duracion_horas=1)
+        self.assertContains(self.client.get(reverse("gestor_propuesta", args=[una_hora.pk])), "<dd>1 hora</dd>")
+
+    def test_rnf_02_validar_propuesta_coincide_en_pestana_y_titulo(self):
+        """RNF-02 La pantalla se llama «Validar propuesta» en la pestaña y en el título."""
+        respuesta = self.client.get(self.url)
+        self.assertContains(respuesta, "<title>Validar propuesta · Casa de Subastas</title>")
+        self.assertContains(respuesta, "<h1>Validar propuesta</h1>")

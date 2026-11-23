@@ -1,8 +1,14 @@
 {% extends "subastas/base.html" %}
 {% load humanize presentacion %}
 {% block titulo %}Subastas abiertas · Casa de Subastas{% endblock %}
-{% block contenido %}
-{# Buscador en píldora, persistente (sticky). Teléfono: [lupa · texto | Filtrar] y abajo Categoría y Tipo; escritorio: una sola píldora y «Filtrar» aparte. #}
+{% block banda %}
+<header class="banda">
+  <div class="banda-texto">
+    <h1>Subastas abiertas</h1>
+    <p class="banda-contexto">Busca artículos y consulta su precio actual.</p>
+  </div>
+</header>
+{# Buscador en píldora, persistente (sticky) en la franja blanca que sigue a la banda. Teléfono: [lupa · texto | Filtrar] y abajo Categoría y Tipo; escritorio: una sola píldora y «Filtrar» aparte. #}
 <div class="busqueda">
 <form method="get" class="buscador" role="search">
   <div class="seg-texto"><label for="id_texto" class="solo-lector">Buscar</label>{{ formulario.texto }}</div>
@@ -13,8 +19,9 @@
   <button class="boton boton-buscar" type="submit">Filtrar</button>
 </form>
 </div>
+{% endblock %}
+{% block contenido %}
 <div class="barra-resultados">
-  <h1>Subastas abiertas</h1>
   <p class="total">{{ resultados|length|intcomma }} resultado{{ resultados|length|pluralize }}</p>
   {# Una píldora por filtro aplicado (filtros_activos); cada una enlaza a la misma búsqueda sin ese filtro. #}
   {% filtros_activos formulario as filtros %}{% if filtros %}
@@ -42,6 +49,6 @@
   {% endfor %}
 </div>
 {% else %}
-<p class="vacio vacio-busqueda">No hay subastas abiertas con esos filtros.</p>
+<p class="vacio vacio-busqueda">No hay subastas abiertas con esos filtros.{% if filtros %} <a href="{% url 'buscar_subastas' %}">Limpiar filtros</a>{% endif %}</p>
 {% endif %}
 {% endblock %}

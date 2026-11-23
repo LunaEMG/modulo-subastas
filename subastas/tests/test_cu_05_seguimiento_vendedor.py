@@ -1,6 +1,8 @@
 """CU-05 Dar seguimiento a sus artículos y subastas (Vendedor), con el resultado de la venta."""
 from django.urls import reverse
 
+from subastas import reloj
+
 from subastas.servicios import cierre, consultas, pujas, revision
 
 from .base import PruebaSubastas
@@ -55,3 +57,27 @@ class CU05Seguimiento(PruebaSubastas):
         respuesta = self.client.get(reverse("mis_articulos"))
         self.assertNotContains(respuesta, "Requieren tu acción")
         self.assertNotContains(respuesta, "contador por-atender")
+
+    def test_una_subasta_desierta_rotula_el_cierre_programado(self):
+        """Una subasta cerrada sin adjudicación rotula su fecha como «Cierre programado» y regresa al artículo, no a «Subastas abiertas»."""
+        self.reloj.avanzar(hours=24)
+        cierre.procesar_pendientes()
+        html = self.client.get(reverse("detalle_subasta", args=[self.subasta.pk])).content.decode()
+        self.assertIn(f"<dt>Cierre programado</dt><dd>{reloj.formato(self.subasta.fecha_cierre)}</dd>", html)
+        self.assertIn("← Volver al artículo", html)
+        self.assertNotIn("Pujas activas", html)
+        self.assertIn("Precio al cierre", html)
+        self.assertNotIn("Precio actual", html)
+
+    def test_rnf_02_los_montos_holandeses_llevan_fichas(self):
+        """RNF-02 En la ficha del artículo, «desde» y «baja» de la holandesa llevan su unidad en fichas."""
+        holandesa = self.subasta_abierta(tipo="HOLANDESA", holandesa_precio_inicial=5000, holandesa_decremento=100, holandesa_intervalo_min=60)
+        html = self.client.get(reverse("detalle_articulo", args=[holandesa.articulo_id])).content.decode()
+        self.assertIn("desde 5,000 fichas, baja 100 fichas cada 60 min", html)
+
+    def test_la_propuesta_enviada_explica_el_orden_de_revision(self):
+        """Con la propuesta enviada, la ficha del artículo explica que primero la revisa el moderador y después el gestor."""
+        articulo = self.articulo_listo()
+        self.proponer(articulo)
+        respuesta = self.client.get(reverse("detalle_articulo", args=[articulo.pk]))
+        self.assertContains(respuesta, "Tu propuesta la revisa primero el moderador y después el gestor.")

@@ -1,7 +1,7 @@
 """CU-06 Revisar artículo y aprobarlo o rechazarlo (Gestor), con la solicitud al valuador."""
 from django.urls import reverse
 
-from subastas.reglas.articulos import AUTOMOVILES
+from subastas.reglas.articulos import AUTOMOVILES, VIDEOJUEGOS
 from subastas.reglas.estados import EstadoArticulo
 from subastas.servicios import consultas
 
@@ -57,3 +57,24 @@ class CU06RevisarArticulo(PruebaSubastas):
         """CA-06.5 Un vendedor no puede abrir los pendientes del gestor (ERR-32)."""
         self.client.force_login(self.vendedor)
         self.assertContains(self.client.get(reverse("gestor_bandeja"), follow=True), "ERR-32")
+
+    def test_un_articulo_que_no_existe_responde_404(self):
+        """Aprobar por POST un id que no existe responde 404, no un error del servidor."""
+        self.assertEqual(self.client.post(reverse("aprobar_articulo", args=[999999])).status_code, 404)
+
+    def test_s39_un_motivo_demasiado_largo_se_rechaza_err_63(self):
+        """S-39 Un motivo de rechazo de más de 1,000 caracteres se rechaza con ERR-63 y el artículo no cambia."""
+        url = reverse("gestor_articulo", args=[self.articulo.pk])
+        respuesta = self.client.post(
+            reverse("rechazar_articulo", args=[self.articulo.pk]), {"motivo": "x" * 1001}, follow=True, **self.desde(url)
+        )
+        self.assertContains(respuesta, "ERR-63")
+        self.articulo.refresh_from_db()
+        self.assertEqual(self.articulo.estado, EstadoArticulo.REGISTRADO)
+
+    def test_rnf_02_la_ficha_del_gestor_no_muestra_s_09(self):
+        """RNF-02 La ficha del gestor explica que la categoría no pasa por valuador sin mostrar S-09."""
+        articulo = self.registrar_articulo(categoria=VIDEOJUEGOS)
+        respuesta = self.client.get(reverse("gestor_articulo", args=[articulo.pk]))
+        self.assertContains(respuesta, "Esta categoría no pasa por valuador: al aprobar")
+        self.assertNotContains(respuesta, "S-09")

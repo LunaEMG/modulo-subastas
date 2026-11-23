@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 from .. import eventos, reloj
 from ..mensajes import ErrorDeNegocio
@@ -40,7 +41,7 @@ def pujas_que_retira_la_sancion(usuario, instante):
 
 
 def _articulo(articulo_id: int) -> Articulo:
-    return Articulo.objects.select_related("vendedor", "categoria").get(pk=articulo_id)
+    return get_object_or_404(Articulo.objects.select_related("vendedor", "categoria"), pk=articulo_id)
 
 
 def ultima_revision(articulo):
@@ -167,8 +168,13 @@ def validar_sancion(usuario, nivel=None) -> int:
         raise ErrorDeNegocio("ERR-65")
     previas = usuario.sanciones.count()
     nivel_esperado = reglas_sanciones.siguiente_nivel(previas)
+    if nivel is not None:
+        try:
+            nivel = int(nivel)
+        except (TypeError, ValueError):
+            raise ErrorDeNegocio("ERR-16", esperado=nivel_esperado) from None
     reglas_sanciones.validar_nivel(
-        nivel=nivel_esperado if nivel is None else int(nivel), sanciones_previas=previas
+        nivel=nivel_esperado if nivel is None else nivel, sanciones_previas=previas
     )
     return nivel_esperado
 
@@ -179,7 +185,7 @@ def sancionar(*, moderador, usuario_id: int, motivo: str, nivel: int | None = No
     coincide y se rechaza con ERR-16."""
     cuentas.exigir_rol(moderador, Rol.MODERADOR)
     motivo = _exigir_motivo(motivo)
-    usuario = get_user_model().objects.get(pk=usuario_id)
+    usuario = get_object_or_404(get_user_model(), pk=usuario_id)
     nivel_esperado = validar_sancion(usuario, nivel)
     instante = reloj.ahora()
     sancion = Sancion.objects.create(

@@ -3,6 +3,8 @@ from django.urls import reverse
 
 from subastas.models import Adjudicacion
 from subastas.reglas.pagos import EstadoAdjudicacion
+from subastas import reloj
+from subastas.servicios import cierre as cierre_servicio
 from subastas.servicios import consultas, pujas
 
 from .base import PruebaSubastas
@@ -97,3 +99,20 @@ class CU14Pagar(PruebaSubastas):
         self.client.force_login(self.crear_vendedor())
         ajeno = self.client.get(reverse("detalle_articulo", args=[self.subasta.articulo_id]), follow=True)
         self.assertContains(ajeno, "ERR-43")
+
+    def test_la_ficha_de_la_subasta_ganada_ofrece_pagar(self):
+        """Con el pago pendiente, la ficha de la subasta ganada muestra el botón «Pagar» que lleva al pago."""
+        ficha = self.client.get(reverse("detalle_subasta", args=[self.subasta.pk]))
+        self.assertContains(ficha, f'href="{reverse("confirmar_pago", args=[self.adjudicacion.pk])}">Pagar 1,500 fichas</a>')
+        cierre_servicio.pagar(comprador=self.comprador, adjudicacion_id=self.adjudicacion.pk)
+        self.assertNotContains(self.client.get(reverse("detalle_subasta", args=[self.subasta.pk])), "Pagar 1,500 fichas")
+
+    def test_la_ficha_cerrada_muestra_solo_el_precio_final_y_la_fecha_real(self):
+        """Ya cerrada, la ficha no dice «Subastas abiertas» ni «Pujas activas», muestra «Precio final» sin «Precio actual» y el cierre con la fecha de la adjudicación."""
+        html = self.client.get(reverse("detalle_subasta", args=[self.subasta.pk])).content.decode()
+        self.assertNotIn("← Subastas abiertas", html)
+        self.assertIn(f'href="{reverse("historial")}">← Mi historial</a>', html)
+        self.assertNotIn("Pujas activas", html)
+        self.assertNotIn("Precio actual", html)
+        self.assertEqual(html.count("Precio final"), 1)
+        self.assertIn(f"<dt>Cierre</dt><dd>{reloj.formato(self.adjudicacion.fecha)}</dd>", html)
