@@ -1,17 +1,26 @@
 {% extends "subastas/base.html" %}
-{% load presentacion %}
+{% load static presentacion %}
+{# Solo en la portada sin sesión: «Entrar» como enlace y «Crear cuenta» como botón; las demás pantallas conservan el menú de base. #}
+{% block menu_visitante %}
+        <a class="ir-entrar" href="{% url 'entrar' %}">Entrar</a>
+        <a class="boton boton-registro" href="{% url 'registro' %}">Crear cuenta</a>
+{% endblock %}
 {% block contenido %}
 {% url 'buscar_subastas' as buscar %}
 {% if not user.is_authenticated %}
-{# Sin sesión no se muestra ninguna subasta: cabecera, categorías, cómo funciona y tipos. #}
-<section class="portada-cabecera">
-  <h1>Casa de Subastas</h1>
-  <p>Subastamos automóviles, relojes, videojuegos y artículos de oficina. Para vender o pujar
-    necesitas una cuenta y acreditar que vives en México.</p>
-  <div class="acciones">
-    <a class="boton" href="{% url 'entrar' %}">Entrar</a>
-    <a class="boton secundario" href="{% url 'registro' %}">Crear cuenta</a>
+{# Sin sesión no se muestra ninguna subasta: hero, categorías, cómo funciona y tipos. #}
+{# RF-01 (cuatro tipos). Las reglas de fichas y residencia van en «Antes de participar». Foto: portada/CREDITOS.md. #}
+<section class="portada-hero" aria-labelledby="titulo-portada">
+  <div class="hero-texto">
+    <p class="sello-hero">Cuatro tipos de subasta</p>
+    <h1 id="titulo-portada">Hay objetos que merecen una <span class="acento">segunda historia</span></h1>
+    <p class="hero-subtitulo">Descubre artículos especiales, participa en subastas en línea y compite por piezas que cuentan una historia.</p>
+    <div class="acciones">
+      <a class="boton" href="{% url 'entrar' %}?next={{ buscar|urlencode:'' }}">Explorar subastas</a>
+      <a class="boton secundario" href="#como-funciona">Cómo funciona</a>
+    </div>
   </div>
+  <img class="hero-foto" src="{% static 'subastas/portada/cronografo.jpg' %}" alt="Reloj cronógrafo dentro de una caja de madera" width="640" height="480" fetchpriority="high">
 </section>
 
 {# Cada categoría lleva a Entrar; «next» devuelve al listado ya filtrado después del código. Las tarjetas salen de tarjetas_categoria. #}
@@ -22,7 +31,7 @@
 </section>
 
 {# Textos atados a las reglas: RN-15 (residencia), RN-13 (fichas), RN-11 (3 días) y RN-12 (resubasta). #}
-<section class="portada-seccion" aria-labelledby="titulo-como-funciona">
+<section class="portada-seccion franja-oscura" id="como-funciona" aria-labelledby="titulo-como-funciona">
   <h2 id="titulo-como-funciona">Cómo funciona</h2>
   <ol class="pasos">
     <li><span class="numero-paso" aria-hidden="true">1</span><h3>Crea tu cuenta</h3><p>Regístrate como comprador, vendedor o ambos con tu código postal en México. Cada vez que entres te enviaremos un código a tu móvil.</p></li>
@@ -40,6 +49,16 @@
     <div><dt>Con precio reservado</dt><dd>Como la inglesa, pero el vendedor fija un precio reservado oculto: si la puja más alta no lo alcanza, el artículo no se vende.</dd></div>
     <div><dt>Con compra inmediata</dt><dd>Como la inglesa, con un precio fijo adicional: quien lo acepta gana la subasta y tiene 3 días para pagarla.</dd></div>
   </dl>
+</section>
+
+{# Las mismas reglas que ya dice la página, reunidas: RN-13 (fichas), RN-15 (residencia) y RN-11 (3 días). #}
+<section class="portada-seccion franja-clara" aria-labelledby="titulo-antes">
+  <h2 id="titulo-antes">Antes de participar</h2>
+  <ul class="reglas-portada">
+    <li>Los precios están en fichas: 1 ficha equivale a 1 peso.</li>
+    <li>Para vender o pujar necesitas una cuenta y acreditar que vives en México.</li>
+    <li>Si ganas, tienes 3 días para pagar.</li>
+  </ul>
 </section>
 {% else %}
 <h1>Casa de Subastas</h1>

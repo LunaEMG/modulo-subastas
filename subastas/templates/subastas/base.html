@@ -23,10 +23,10 @@
         {% if es_gestor %}<a class="ir-gestor" href="{% url 'gestor_bandeja' %}"{% if actual.gestor %} aria-current="{{ actual.gestor }}"{% endif %}>Pendientes del gestor{% if pendientes_rol.gestor %} <span class="contador por-atender">{{ pendientes_rol.gestor }}<span class="solo-lector"> pendientes</span></span>{% endif %}</a>{% endif %}
         {% if es_moderador %}<a class="ir-moderacion" href="{% url 'moderador_bandeja' %}"{% if actual.moderacion %} aria-current="{{ actual.moderacion }}"{% endif %}>Moderación{% if pendientes_rol.moderador %} <span class="contador por-atender">{{ pendientes_rol.moderador }}<span class="solo-lector"> pendientes</span></span>{% endif %}</a>{% endif %}
         <a class="ir-avisos" href="{% url 'avisos' %}"{% if actual.avisos %} aria-current="{{ actual.avisos }}"{% endif %}>Avisos{% if avisos_sin_leer %} <span class="contador">{{ avisos_sin_leer }}<span class="solo-lector"> pendientes</span></span>{% endif %}</a>
-      {% else %}
+      {% else %}{% block menu_visitante %}
         <a class="ir-entrar" href="{% url 'entrar' %}"{% if actual.entrar %} aria-current="{{ actual.entrar }}"{% endif %}>Entrar</a>
         <a class="ir-registro" href="{% url 'registro' %}"{% if actual.registro %} aria-current="{{ actual.registro }}"{% endif %}>Registrarse</a>
-      {% endif %}
+      {% endblock %}{% endif %}
     </nav>
     {% if user.is_authenticated %}
     <form class="salir" method="post" action="{% url 'salir' %}">{% csrf_token %}
@@ -55,10 +55,16 @@
   {% endif %}
   {% block contenido %}{% endblock %}
 </main>
-{% if modo_desarrollo %}
-<footer class="pie contenedor">
-  <nav aria-label="Desarrollo"><a href="{% url 'bandeja_simulada' %}"{% if actual.bandeja %} aria-current="{{ actual.bandeja }}"{% endif %}>Bandeja simulada</a></nav>
+<footer class="pie">
+  <div class="contenedor">
+    <p class="pie-marca">Casa de Subastas</p>
+    <div class="pie-centro">
+      <p>Plataforma de subastas en línea · Proyecto escolar</p>
+      {# Solo en desarrollo: la bandeja simulada sale del menú principal. #}
+      {% if modo_desarrollo %}<nav aria-label="Desarrollo"><a href="{% url 'bandeja_simulada' %}"{% if actual.bandeja %} aria-current="{{ actual.bandeja }}"{% endif %}>Bandeja simulada</a></nav>{% endif %}
+    </div>
+    <p class="pie-derechos">© 2026 Casa de Subastas</p>
+  </div>
 </footer>
-{% endif %}
 </body>
 </html>

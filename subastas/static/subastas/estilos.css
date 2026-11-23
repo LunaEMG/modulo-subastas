@@ -81,6 +81,10 @@
   --sobre-oscuro-suave: #c5c9d0;
   --velo: rgba(21, 24, 29, .06);
   --velo-fuerte: rgba(21, 24, 29, .1);
+  /* Banda oscura (hero de la portada): la misma tinta como fondo; sus velos son blancos. */
+  --fondo-oscuro: var(--texto);
+  --velo-claro: rgba(255, 255, 255, .08);
+  --velo-claro-fuerte: rgba(255, 255, 255, .14);
 
   /* Categoría en dos tonos: tinte (fondo de foto) y profundo (placa con texto blanco). */
   --prof-cat: #3a3f47;
@@ -124,6 +128,7 @@
   --i-search-x: url("iconos/search-x.svg");
   --i-inbox: url("iconos/inbox.svg");
   --i-bell-off: url("iconos/bell-off.svg");
+  --i-x: url("iconos/x.svg");
 }
 
 /* Categorías: la clase se arma con cat-{{ categoria.nombre|slugify }}; cualquier otra usa el tono neutro.
@@ -516,7 +521,7 @@ pre.envio { white-space: pre-wrap; margin: 0; font: inherit; }
 html { -webkit-tap-highlight-color: transparent; }
 a, button, label.opcion-tipo, summary { touch-action: manipulation; }
 @media (prefers-reduced-motion: no-preference) {
-  .boton, .tarjeta-enlace, .acceso-categoria, .menu a, .salir button, .opcion-tipo, input, select, textarea {
+  .boton, .tarjeta-enlace, .filtro-activo, .menu a, .salir button, .opcion-tipo, input, select, textarea {
     transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
   }
 }
@@ -528,10 +533,22 @@ a, button, label.opcion-tipo, summary { touch-action: manipulation; }
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
 }
-/* Pie solo en desarrollo: la bandeja simulada sale del menú principal. */
-.pie { padding-block: 16px 32px; border-top: 1px solid var(--borde); font-size: .9rem; color: var(--texto-suave); }
-.pie a { color: var(--texto-suave); display: inline-block; padding-block: 12px; }
-.pie a[aria-current] { color: var(--texto); font-weight: 600; }
+/* Pie oscuro en todas las pantallas: marca, leyenda y derechos. En desarrollo lleva, discreta, la bandeja
+   simulada (sale del menú principal). Va siempre al fondo de la ventana, aunque la página sea corta. */
+body { display: flex; flex-direction: column; min-height: 100vh; }
+main.contenedor { width: 100%; flex: 1 0 auto; }
+.pie { background: var(--fondo-oscuro); color: var(--sobre-oscuro-suave); font-size: .9rem; }
+.pie .contenedor { display: grid; gap: 6px; justify-items: center; text-align: center; padding-block: 28px; }
+.pie p { margin: 0; }
+.pie-marca { color: var(--sobre-oscuro); font-family: var(--fuente-titulos); font-stretch: 87.5%; font-weight: 700; font-size: 1.05rem; }
+.pie a { display: inline-block; padding-block: 12px; margin-block: -6px; color: var(--sobre-oscuro-suave); }
+.pie a[aria-current] { color: var(--sobre-oscuro); font-weight: 600; }
+.pie a:focus-visible { outline-color: var(--oro); }
+@media (min-width: 760px) {
+  .pie .contenedor { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 24px; }
+  .pie-marca { justify-self: start; }
+  .pie-derechos { justify-self: end; }
+}
 @media (pointer: coarse) {
   label:has(> input[type="checkbox"]) { min-height: 44px; margin-bottom: 0; }
 }
@@ -606,6 +623,18 @@ form.buscador > div, .filtros > div { margin: 0; }
 }
 .barra-resultados h1 { margin: 0; font-size: clamp(1.35rem, 1.1rem + 1vw, 1.75rem); }
 .total { margin: 0; color: var(--texto-suave); font-variant-numeric: tabular-nums; }
+/* Filtros activos junto al total: una píldora por filtro con su «x»; el enlace es la misma búsqueda sin él. */
+.filtros-activos { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.filtro-activo {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 10px 4px 12px;
+  color: var(--texto); background: var(--oro-velo); border: 1px solid var(--oro-velo); border-radius: var(--radio-pildora);
+  font-size: .875rem; font-weight: 700; line-height: 1.2; text-decoration: none; --icono: var(--i-x);
+}
+.filtro-activo::after { color: var(--oro-texto); }
+@media (hover: hover) and (pointer: fine) {
+  .filtro-activo:hover { border-color: var(--oro-texto); }
+}
+.filtro-activo:active { border-color: var(--texto); }
 
 /* Tarjeta de subasta, siempre en el mismo orden: foto → título → precio → tipo y pujas → tiempo.
    En el teléfono es una fila (foto a la izquierda); desde 640 px, mosaico. Solo CSS. */
@@ -779,16 +808,57 @@ body:has(.ficha-subasta) { background: var(--superficie); }
 }
 
 /* ════ Portada ════ */
-/* Sin sesión: cabecera con el titular, la línea de residencia y las dos acciones; nunca se muestran subastas. */
-.portada-cabecera { display: grid; gap: 14px; max-width: 680px; padding: 12px 0 8px; }
-.portada-cabecera > * { margin: 0; }
-.portada-cabecera h1 { font-size: clamp(2.1rem, 1.5rem + 2.6vw, 3.25rem); line-height: 1.02; letter-spacing: -.015em; }
-.portada-cabecera p { font-size: 1.1rem; color: var(--texto-suave); max-width: 52ch; }
-.portada-cabecera .acciones { margin-top: 6px; }
-@media (max-width: 479px) {
-  .portada-cabecera .acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .portada-cabecera .acciones .boton { padding-inline: 12px; }
+/* Sin sesión, el menú es «Entrar» (enlace) y «Crear cuenta» (botón oro), en la misma fila que la marca. */
+.encabezado .contenedor:has(.boton-registro) { padding-block: 6px; }
+.menu:has(> .boton-registro) { order: 0; width: auto; margin-inline: 0; flex-wrap: nowrap; align-items: center; gap: 4px; }
+.menu:has(> .boton-registro) a { flex: none; flex-direction: row; min-height: 44px; padding: 10px; font-size: .9rem; }
+.menu a.boton-registro {
+  padding: 0 18px; border: 1.5px solid var(--oro); border-radius: var(--radio-pildora);
+  background: var(--oro); color: var(--sobre-claro); font-weight: 700; box-shadow: none;
 }
+@media (hover: hover) and (pointer: fine) { .menu a.boton-registro:hover { background: var(--oro-hover); border-color: var(--oro-hover); } }
+.menu a.boton-registro:active { background: var(--oro-activo); border-color: var(--oro-activo); }
+/* En el teléfono, marca, «Entrar» y «Crear cuenta» caben en una fila si «Entrar» va sin ícono. */
+@media (max-width: 759px) {
+  .encabezado .contenedor:has(.boton-registro) { flex-wrap: nowrap; gap: 0 8px; }
+  .menu:has(> .boton-registro) a { padding-inline: 8px; }
+  .menu:has(> .boton-registro) a.boton-registro { padding-inline: 14px; }
+  .menu:has(> .boton-registro) .ir-entrar::before { display: none; }
+}
+@media (min-width: 760px) { .encabezado .contenedor:has(.boton-registro) { padding-block: 8px; } }
+
+/* Sin sesión: hero oscuro a todo el ancho (texto y foto); nunca se muestran subastas. El fondo llega a los
+   bordes de la ventana con la misma sombra de expansión recortada que la banda del buscador. */
+.portada-hero {
+  display: grid; gap: 32px; align-items: center; padding-block: 40px 44px;
+  color: var(--sobre-oscuro); background: var(--fondo-oscuro);
+  box-shadow: 0 0 0 100vmax var(--fondo-oscuro); clip-path: inset(0 -100vmax);
+}
+main > .portada-hero:first-child { margin-top: -24px; }
+.hero-texto { display: grid; gap: 16px; justify-items: start; }
+.hero-texto > * { margin: 0; }
+.sello-hero {
+  padding: 3px 10px; border: 1px solid var(--oro); border-radius: var(--radio-sello); color: var(--oro);
+  font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+}
+.portada-hero h1 { max-width: 13ch; font-size: clamp(2.4rem, 1.4rem + 3.6vw, 4.25rem); line-height: 1; letter-spacing: -.02em; }
+.portada-hero .acento { color: var(--oro); }
+.hero-subtitulo { max-width: 44ch; font-size: 1.125rem; color: var(--sobre-oscuro-suave); }
+.portada-hero .acciones { margin-top: 8px; }
+.portada-hero .boton.secundario { background: transparent; border-color: var(--sobre-oscuro); color: var(--sobre-oscuro); }
+@media (hover: hover) and (pointer: fine) { .portada-hero .boton.secundario:hover { background: var(--velo-claro); border-color: var(--sobre-oscuro); } }
+.portada-hero .boton.secundario:active { background: var(--velo-claro-fuerte); border-color: var(--sobre-oscuro); }
+.portada-hero a:focus-visible { outline-color: var(--oro); }
+.hero-foto { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radio-superficie); }
+@media (max-width: 479px) {
+  .portada-hero .acciones { display: grid; gap: 10px; width: 100%; }
+}
+@media (min-width: 880px) {
+  .portada-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; padding-block: 72px; }
+}
+/* «Cómo funciona» baja con el ancla del hero; el desplazamiento suave solo si el usuario no pidió menos movimiento. */
+#como-funciona { scroll-margin-top: 16px; }
+@media (prefers-reduced-motion: no-preference) { html:has(.portada-hero) { scroll-behavior: smooth; } }
 .portada-seccion { margin-top: 40px; }
 .portada-seccion > h2 { margin: 0 0 14px; font-size: 1.35rem; }
 .portada-seccion > h2:has(+ .entradilla) { margin-bottom: 2px; }
@@ -806,16 +876,44 @@ body:has(.ficha-subasta) { background: var(--superficie); }
 }
 .pasos h3 { margin: 0 0 4px; font-family: var(--fuente-titulos); font-stretch: 87.5%; font-size: 1.1rem; }
 .pasos p { margin: 0; color: var(--texto-suave); }
-/* Tipos de subasta: una fila por tipo; en escritorio, nombre a la izquierda y descripción a la derecha. */
-.lista-tipos { margin: 0; background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio-superficie); }
-.lista-tipos > div { padding: 14px 16px; border-top: 1px solid var(--borde); }
-.lista-tipos > div:first-child { border-top: 0; }
-.lista-tipos dt { font-weight: 700; }
-.lista-tipos dd { margin: 2px 0 0; color: var(--texto-suave); }
-@media (min-width: 760px) {
-  .lista-tipos > div { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; align-items: baseline; }
-  .lista-tipos dd { margin: 0; }
+/* «Cómo funciona» en franja oscura a todo el ancho (misma tinta y misma técnica que el hero): número grande
+   en oro arriba, una línea fina y el texto claro debajo. */
+.franja-oscura {
+  margin-top: 48px; padding-block: 48px 56px;
+  color: var(--sobre-oscuro); background: var(--fondo-oscuro);
+  box-shadow: 0 0 0 100vmax var(--fondo-oscuro); clip-path: inset(0 -100vmax);
 }
+.portada-seccion.franja-oscura > h2 { margin-bottom: 24px; font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); }
+.franja-oscura .pasos { gap: 28px; }
+@media (min-width: 760px) { .franja-oscura .pasos { gap: 32px; } }
+.franja-oscura .pasos li {
+  grid-template-columns: minmax(0, 1fr); row-gap: 6px;
+  padding: 0; background: none; border: 0; border-radius: 0;
+}
+.franja-oscura .numero-paso {
+  grid-row: auto; padding-bottom: 14px; margin-bottom: 8px; border-bottom: 1px solid var(--velo-claro-fuerte);
+  color: var(--oro); font-size: clamp(3rem, 2.4rem + 2vw, 4rem);
+}
+.franja-oscura .pasos p { color: var(--sobre-oscuro-suave); }
+/* Tipos de subasta: cuatro tarjetas, una columna en el teléfono y 2 × 2 desde 760 px. */
+.lista-tipos { margin: 0; display: grid; gap: 12px; }
+@media (min-width: 760px) { .lista-tipos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; } }
+.lista-tipos > div { padding: 20px; background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio-superficie); }
+.lista-tipos dt {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--fuente-titulos); font-stretch: 87.5%; font-weight: 700; font-size: 1.125rem; line-height: 1.2;
+}
+.lista-tipos dt::before { color: var(--oro-texto); }
+.lista-tipos dd { margin: 6px 0 0; color: var(--texto-suave); }
+/* «Antes de participar»: franja clara al final, a todo el ancho y pegada al pie. */
+.franja-clara {
+  margin-top: 48px; padding-block: 40px 48px; background: var(--superficie);
+  box-shadow: 0 0 0 100vmax var(--superficie), 0 -1px 0 100vmax var(--borde); clip-path: inset(-1px -100vmax 0);
+}
+main > .franja-clara:last-child { margin-bottom: -56px; }
+.reglas-portada { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+@media (min-width: 760px) { .reglas-portada { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; } }
+.reglas-portada li { padding-top: 12px; border-top: 1px solid var(--borde); font-size: 1.05rem; font-weight: 600; }
 /* Con sesión: píldora de búsqueda cerrada [lupa · texto | Buscar] que envía al buscador (CU-08). */
 .buscador-inicio { display: grid; grid-template-columns: minmax(0, 1fr) auto; max-width: 680px; margin: 4px 0 16px; }
 .buscador-inicio > div { margin: 0; }
@@ -856,25 +954,6 @@ body:has(.ficha-subasta) { background: var(--superficie); }
   .tarjetas-categoria { gap: 8px; }
   .nombre-categoria { left: 10px; right: 10px; bottom: 8px; font-size: 1rem; }
 }
-/* Listado: chips neutros iguales para todas, ícono + nombre. Cada chip mide lo que su nombre, que nunca
-   se parte («Artículos de oficina» queda en una línea); los que no caben bajan a la fila siguiente y
-   cada fila se reparte el ancho sobrante, para que no queden huecos sueltos al final. */
-.accesos-categoria { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
-.acceso-categoria {
-  flex: 1 1 auto; display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 6px 12px;
-  color: var(--texto); background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio-control);
-  font-weight: 700; line-height: 1.2; text-decoration: none;
-}
-.acceso-categoria::before { color: var(--texto-suave); }
-.acceso-categoria span { white-space: nowrap; }
-.acceso-categoria[aria-current] { color: var(--oro-texto); border-color: var(--oro-texto); box-shadow: inset 0 0 0 1px var(--oro-texto); }
-.acceso-categoria[aria-current]::before { color: var(--oro-texto); }
-@media (hover: hover) and (pointer: fine) {
-  .acceso-categoria:hover { border-color: var(--borde-campo); text-decoration: underline; text-underline-offset: .15em; }
-  .acceso-categoria[aria-current]:hover { border-color: var(--oro-texto); }
-}
-.acceso-categoria:active { border-color: var(--texto); }
-.accesos-listado { margin: 12px 0 4px; }
 /* Con sesión: una tarjeta por rol, con el mismo filo y comportamiento que las tarjetas de subasta. */
 .saludo { color: var(--texto-suave); margin-bottom: 16px; }
 .rejilla-roles .tarjeta-rol { gap: 6px; padding: 20px; }
@@ -919,9 +998,9 @@ main > h2 { margin-top: 32px; }
    Son seudoelementos sin texto: los lectores de pantalla no los anuncian, y siempre van junto a una palabra. */
 .mensaje::before, .tiempo::before, .sello::before, .errorlist li::before,
 .seg-texto::before, .vacio::before, .menu a[class^="ir-"]::before, .salir button::before,
-.chip-categoria::before, .acceso-categoria::before, .pujas::before,
+.chip-categoria::before, .filtro-activo::after, .pujas::before,
 .accion-puja .boton::before, .boton-ancho-sec::before, .celda-accion .boton::before,
-.portada-cabecera .acciones .boton::before, .pasos h3::before, .aviso .titulo-tarjeta::before,
+.portada-hero .acciones .boton:not(.secundario)::before, .pasos h3::before, .lista-tipos dt::before, .aviso .titulo-tarjeta::before,
 label[for="id_fotografias"]::before {
   content: ""; flex: none; display: inline-block; vertical-align: -.2em;
   width: var(--icono-tamano); height: var(--icono-tamano); background: currentColor;
@@ -952,13 +1031,17 @@ label[for="id_fotografias"]::before {
 .boton-ancho-sec { --icono: var(--i-shopping-bag); }
 .celda-accion .boton { --icono: var(--i-wallet); }
 
-/* Portada: Entrar, Crear cuenta y los tres pasos (crear cuenta, pujar, pagar). */
-.portada-cabecera .acciones .boton { --icono: var(--i-log-in); }
-.portada-cabecera .acciones .boton.secundario { --icono: var(--i-user-plus); }
+/* Portada: Explorar subastas (el mismo ícono que «Subastas» en el menú) y los tres pasos (crear cuenta, pujar, pagar). */
+.portada-hero .acciones .boton { --icono: var(--i-store); }
 .pasos h3 { display: flex; align-items: center; gap: 8px; }
 .pasos li:nth-child(1) h3 { --icono: var(--i-user-plus); }
 .pasos li:nth-child(2) h3 { --icono: var(--i-gavel); }
 .pasos li:nth-child(3) h3 { --icono: var(--i-wallet); }
+/* Tipos, en el orden fijo de la portada: inglesa, holandesa, con precio reservado y con compra inmediata. */
+.lista-tipos > div:nth-child(1) dt { --icono: var(--i-arrow-up); }
+.lista-tipos > div:nth-child(2) dt { --icono: var(--i-arrow-down); }
+.lista-tipos > div:nth-child(3) dt { --icono: var(--i-lock); }
+.lista-tipos > div:nth-child(4) dt { --icono: var(--i-shopping-bag); }
 
 /* Avisos y formulario de artículo */
 .aviso .titulo-tarjeta { --icono: var(--i-bell); }
