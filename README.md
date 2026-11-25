@@ -7,6 +7,7 @@ Actores: Vendedor, Comprador, Gestor de Subastas, Moderador de Contenido, Servic
 ## Requisitos
 
 - Python 3.12 o posterior, con el módulo `venv` (en Ubuntu: `sudo apt install python3-venv` si falta).
+  En Windows, al instalar Python marca «Add python.exe to PATH»; si no, los comandos de abajo no lo encuentran.
 - Nada más: la base de datos es SQLite y viene incluida en Python. No se instala nada de forma global.
 
 ## Instalación
@@ -37,7 +38,7 @@ cp .env.example .env
 .venv/bin/python manage.py cargar_datos_prueba
 ```
 
-En Windows, cambia `.venv/bin/` por `.venv\Scripts\` y `cp` por `copy`.
+En Windows, el primer comando es `python -m venv .venv` (o `py -m venv .venv`), porque `python3` no suele existir; en los demás, cambia `.venv/bin/` por `.venv\Scripts\` y `cp` por `copy`.
 
 ## Ejecución
 
