@@ -50,7 +50,6 @@ NOMBRE_ILUSTRACION = "demo"
 
 
 def _fotografia(titulo: str, color: str) -> SimpleUploadedFile:
-    """Ilustración del artículo, generada aquí mismo (sin internet)."""
     contenido = io.BytesIO()
     ilustrar(titulo, color).save(contenido, "PNG", optimize=True)
     return SimpleUploadedFile(

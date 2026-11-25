@@ -38,7 +38,6 @@ class SubastaHolandesa(PruebaSubastas):
         self.subasta.refresh_from_db()
         self.assertEqual(self.subasta.estado, EstadoSubasta.CERRADA_CON_GANADOR)
         self.assertEqual(self.subasta.articulo.estado, EstadoArticulo.ADJUDICADO)
-        # El segundo ya no puede aceptar.
         self.assertErrorDeNegocio(
             "ERR-36", pujas.aceptar_precio_holandesa, comprador=self.crear_comprador(), subasta_id=self.subasta.pk
         )

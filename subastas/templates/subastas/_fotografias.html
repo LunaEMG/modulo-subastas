@@ -1,6 +1,6 @@
 {% with fotos=articulo.fotografias_visibles %}
 {% if fotos %}
-{# Foto principal grande y miniaturas debajo; cada imagen abre su archivo completo (sin JavaScript). #}
+{# Cada imagen enlaza a su archivo completo: no hace falta JavaScript. #}
 <div class="galeria">
   {% with principal=fotos.0 %}<a class="galeria-principal" href="{{ principal.archivo.url }}" target="_blank" rel="noopener" aria-label="Abrir la fotografía 1 de {{ articulo.titulo }} en tamaño completo"><img src="{{ principal.archivo.url }}" width="800" height="600" decoding="async" alt="Fotografía 1 de {{ articulo.titulo }}"></a>{% endwith %}
   {% if fotos|length > 1 %}<div class="galeria-miniaturas">

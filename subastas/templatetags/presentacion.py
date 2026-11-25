@@ -1,9 +1,5 @@
-"""Filtros de presentación (RNF-02). No deciden nada del negocio: solo dan formato a datos que ya existen.
-
-El tiempo restante se calcula con reloj.ahora(), no con timezone.now(), para que respete
-`adelantar_reloj` en la demostración y el RelojFijo de las pruebas. El umbral de urgencia
-(menos de un día) es una decisión de presentación, no una regla de negocio.
-"""
+"""Filtros de presentación (RNF-02): solo dan formato, no deciden nada del negocio.
+El umbral de urgencia (menos de un día) es una decisión de presentación, no una regla."""
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
@@ -20,6 +16,7 @@ UMBRAL_URGENCIA = timedelta(days=1)
 def _restante(fecha_cierre: datetime | None) -> timedelta | None:
     if fecha_cierre is None:
         return None
+    # reloj.ahora() y no timezone.now(): así respeta adelantar_reloj y el RelojFijo de las pruebas.
     restante = fecha_cierre - reloj.ahora()
     return restante if restante > timedelta(0) else None
 
@@ -57,11 +54,8 @@ def fecha_completa(instante: datetime | None) -> str:
 
 @register.simple_tag
 def estatico_versionado(ruta: str) -> str:
-    """La URL de un archivo estático con su fecha de modificación (?v=…).
-
-    El servidor de desarrollo no manda Cache-Control, así que el navegador puede seguir usando una
-    hoja vieja después de un cambio. Con la versión en la URL, cada cambio obliga a pedirla de nuevo.
-    """
+    """Agrega ?v=<fecha de modificación>: el servidor de desarrollo no manda Cache-Control y el
+    navegador seguiría usando la hoja vieja después de un cambio."""
     from os import path
 
     from django.contrib.staticfiles import finders
@@ -82,9 +76,8 @@ ICONOS_CATEGORIA = {
 }
 ICONO_GENERICO = "tag"
 
-# Único lugar de la foto de portada de cada categoría (static/subastas/categorias/). Cada archivo es un
-# recorte 4:3 de una foto real de fotos_demo/ (categorias/CREDITOS.md). Una categoría que no esté aquí
-# muestra en la portada su tinte con su ícono grande, así que una categoría nueva funciona sin fotos.
+# Recortes 4:3 de fotos de fotos_demo/ (licencias en categorias/CREDITOS.md). Una categoría que no
+# esté aquí muestra su tinte con su ícono grande, así que una categoría nueva funciona sin fotos.
 FOTOS_CATEGORIA = {
     "Automóviles": "automoviles.jpg",
     "Relojes": "relojes.jpg",
@@ -113,10 +106,7 @@ def foto_categoria(categoria) -> str:
 
 @register.inclusion_tag("subastas/_tarjetas_categoria.html")
 def tarjetas_categoria(entrar=False):
-    """Portada: una tarjeta con foto por categoría registrada hacia el buscador (CU-08) con ?categoria=.
-
-    Con `entrar`, la tarjeta lleva a Entrar y `next` devuelve al listado ya filtrado.
-    """
+    """Con `entrar`, cada tarjeta lleva a Entrar y `next` devuelve al buscador (CU-08) ya filtrado."""
     from subastas.models import Categoria
 
     return {"categorias": Categoria.objects.all(), "entrar": entrar}
@@ -124,11 +114,8 @@ def tarjetas_categoria(entrar=False):
 
 @register.simple_tag
 def filtros_activos(formulario):
-    """Listado (CU-08): una píldora por filtro aplicado (texto, categoría, tipo).
-
-    Cada una lleva la etiqueta del filtro y el enlace a la misma búsqueda con los demás filtros y sin ese.
-    Sin filtros (o con el formulario sin enviar) no hay píldoras.
-    """
+    """CU-08: una píldora por filtro aplicado, con el enlace a la misma búsqueda sin ese filtro.
+    Lista vacía si el formulario no se envió o no es válido."""
     if not formulario.is_bound or not formulario.is_valid():
         return []
     datos = formulario.cleaned_data

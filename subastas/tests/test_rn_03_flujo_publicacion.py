@@ -80,7 +80,6 @@ class RN03FlujoDePublicacion(PruebaSubastas):
         articulo.refresh_from_db()
         subasta.refresh_from_db()
         self.assertEqual((articulo.estado, subasta.estado), (A.VALUADO, S.RECHAZADA))
-        # Puede enviar otra propuesta.
         self.proponer(articulo, duracion_horas=72)
 
     def test_err_32_solo_el_gestor_revisa(self):

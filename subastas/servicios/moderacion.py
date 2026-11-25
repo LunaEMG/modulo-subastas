@@ -161,9 +161,8 @@ def nivel_siguiente(usuario) -> int:
 
 
 def validar_sancion(usuario, nivel=None) -> int:
-    """CU-20: las reglas que comparten la confirmación y la sanción, para que la pantalla no anuncie
-    algo que después se rechaza. S-29: el personal no se sanciona (ERR-65). RN-16: `nivel` debe ser el
-    siguiente (ERR-16) y no hay nivel tras la baja definitiva (ERR-47). Devuelve el nivel que se aplica."""
+    """CU-20: compartida por la confirmación y la sanción, para no anunciar algo que después se rechaza.
+    Devuelve el nivel a aplicar; ERR-65 si es personal (S-29), ERR-16 o ERR-47 por RN-16."""
     if not (usuario.tiene_rol(Rol.VENDEDOR) or usuario.tiene_rol(Rol.COMPRADOR)):
         raise ErrorDeNegocio("ERR-65")
     previas = usuario.sanciones.count()

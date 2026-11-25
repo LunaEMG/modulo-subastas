@@ -1,4 +1,4 @@
-{% load presentacion %}{% url 'buscar_subastas' as buscar %}{# Foto desde foto_categoria e ícono de respaldo desde icono_categoria: los dos mapeos viven en presentacion.py. #}
+{% load presentacion %}{% url 'buscar_subastas' as buscar %}{# Los mapeos de foto e ícono viven en presentacion.py. #}
 <ul class="tarjetas-categoria" role="list">
 {% for c in categorias %}{% with foto=c|foto_categoria %}  <li><a class="tarjeta-categoria cat-{{ c.nombre|slugify }}" href="{% if entrar %}{% url 'entrar' %}?next={% filter urlencode:'' %}{{ buscar }}?categoria={{ c.nombre|urlencode }}{% endfilter %}{% else %}{{ buscar }}?categoria={{ c.nombre|urlencode }}{% endif %}">{% if foto %}<img src="{{ foto }}" alt="" width="640" height="480" decoding="async">{% else %}<span class="icono-respaldo" style="--icono: url('{{ c|icono_categoria }}')"></span>{% endif %}<span class="nombre-categoria">{{ c.nombre }}</span></a></li>
 {% endwith %}{% endfor %}</ul>
