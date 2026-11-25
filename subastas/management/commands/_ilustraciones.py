@@ -1,12 +1,6 @@
-"""Ilustraciones planas de los artículos de demostración, dibujadas con Pillow.
-
-No se descarga nada: cada figura se compone con formas simples y se pinta a sangre sobre el
-tinte de su categoría («El Mostrador»): detrás del objeto va un disco del tinte
-aclarado y la sombra del piso es el tinte mezclado con el tono profundo de la categoría.
-Los objetos conservan sus colores. Se dibuja al doble de tamaño y se reduce, para que los
-bordes salgan suaves.
-El módulo empieza con guion bajo para que Django no lo tome como comando.
-"""
+"""Respaldo sin internet de las fotos de demostración: figuras planas con Pillow sobre el tinte de su
+categoría, dibujadas al doble y reducidas para suavizar bordes. El guion bajo evita que Django lo
+tome como comando."""
 import math
 from dataclasses import dataclass
 
@@ -34,8 +28,6 @@ def mezclar(a: str, b: str, t: float) -> str:
 
 @dataclass(frozen=True)
 class Paleta:
-    """Fondo de la foto a partir del par de colores de la categoría (tinte y profundo)."""
-
     tinte: str
     profundo: str
 

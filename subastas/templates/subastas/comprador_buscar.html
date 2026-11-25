@@ -8,7 +8,6 @@
     <p class="banda-contexto">Busca artículos y consulta su precio actual.</p>
   </div>
 </header>
-{# Buscador en píldora, persistente (sticky) en la franja blanca que sigue a la banda. Teléfono: [lupa · texto | Filtrar] y abajo Categoría y Tipo; escritorio: una sola píldora y «Filtrar» aparte. #}
 <div class="busqueda">
 <form method="get" class="buscador" role="search">
   <div class="seg-texto"><label for="id_texto" class="solo-lector">Buscar</label>{{ formulario.texto }}</div>
@@ -23,7 +22,6 @@
 {% block contenido %}
 <div class="barra-resultados">
   <p class="total">{{ resultados|length|intcomma }} resultado{{ resultados|length|pluralize }}</p>
-  {# Una píldora por filtro aplicado (filtros_activos); cada una enlaza a la misma búsqueda sin ese filtro. #}
   {% filtros_activos formulario as filtros %}{% if filtros %}
   <ul class="filtros-activos" aria-label="Filtros activos">
     {% for f in filtros %}<li><a class="filtro-activo" href="{{ f.href }}" aria-label="Quitar filtro {{ f.etiqueta }}">{{ f.etiqueta }}</a></li>

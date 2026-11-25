@@ -74,7 +74,7 @@ class CU20Sancionar(PruebaSubastas):
         self.assertFalse(Sancion.objects.exists())
 
     def test_review_la_confirmacion_no_se_ofrece_para_el_personal_err_65(self):
-        """Code review: la confirmación aplica la misma regla que la sanción; con el personal regresa con ERR-65."""
+        """La confirmación aplica la misma regla que la sanción; con el personal regresa con ERR-65."""
         gestor = self.crear_gestor()
         origen = reverse("moderador_usuario", args=[gestor.pk])
         respuesta = self.client.post(
@@ -84,7 +84,7 @@ class CU20Sancionar(PruebaSubastas):
         self.assertNotContains(respuesta, "Revisa y confirma")
 
     def test_review_una_confirmacion_con_el_nivel_ya_superado_se_rechaza_err_16(self):
-        """Code review: si otro moderador sancionó antes, la confirmación de la página vieja se rechaza con ERR-16."""
+        """Si otro moderador sancionó antes, la confirmación de la página vieja se rechaza con ERR-16."""
         self.client.post(reverse("sancionar", args=[self.infractor.pk]), {"motivo": "Spam", "nivel": "1"})
         respuesta = self.client.post(
             reverse("confirmar_sancion", args=[self.infractor.pk]), {"motivo": "Spam", "nivel": "1"}, follow=True, **self.desde(self.url)

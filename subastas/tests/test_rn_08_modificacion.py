@@ -23,7 +23,6 @@ class RN08Modificacion(PruebaSubastas):
         self.assertEqual(consultas.precio_actual(self.subasta), 1300)
         movimiento = puja.movimientos.last()
         self.assertEqual((movimiento.tipo, movimiento.monto_anterior, movimiento.monto_nuevo), ("MODIFICACION", 1000, 1300))
-        # Beto quedó superado y se le avisa.
         self.assertTrue(self.beto.notificaciones.filter(tipo="MSG-36").exists())
 
     def test_invalido_propia_1000_actual_1200_nueva_1100(self):

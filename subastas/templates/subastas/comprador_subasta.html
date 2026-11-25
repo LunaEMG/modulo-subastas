@@ -11,7 +11,6 @@
 </header>
 {% endblock %}
 {% block contenido %}
-{# Ficha: banda (título, categoría y estado) → foto → caja de compra en el teléfono; foto a la izquierda y columna fija a la derecha desde 880 px. #}
 <div class="ficha-subasta cat-{{ articulo.categoria.nombre|slugify }}">
   <div class="ficha-galeria">{% include "subastas/_fotografias.html" %}</div>
   <div class="panel-compra">
@@ -82,7 +81,6 @@
         <p class="nota">Solo los compradores pueden pujar.</p>
       {% endif %}
 
-      {# Las cifras de la subasta, en fila. #}
       <dl class="cifras">
         <div><dt>Precio de salida</dt><dd>{{ subasta.precio_salida|intcomma }} ficha{{ subasta.precio_salida|pluralize }}</dd></div>
         {% if subasta.tipo != 'HOLANDESA' and abierta %}<div><dt>Pujas activas</dt><dd>{{ numero_pujas|intcomma }}</dd></div>{% endif %}

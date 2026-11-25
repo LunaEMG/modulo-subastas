@@ -54,7 +54,6 @@ class AvisoAlCerrar(PruebaSubastas):
         self.assertIsNotNone(adjudicacion.pk)
         entrega = self._aviso_ganador().entregas.get(canal=Canal.CORREO)
         self.assertEqual(entrega.estado, EntregaNotificacion.Estado.FALLIDA)
-        # El aviso dentro de la aplicación sí llegó.
         self.assertEqual(self._aviso_ganador().entregas.get(canal=Canal.APP).estado, "ENVIADA")
 
     def test_err_10_una_subasta_desierta_no_avisa_ganador(self):

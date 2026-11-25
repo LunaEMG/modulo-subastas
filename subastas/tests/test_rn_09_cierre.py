@@ -85,5 +85,4 @@ class CerrarSubasta(PruebaSubastas):
         self.assertEqual(cierre.procesar_pendientes(), {"cerradas": 1, "resubastadas": 0})
         otra.refresh_from_db()
         self.assertEqual(otra.estado, EstadoSubasta.ABIERTA)
-        # Una segunda pasada no vuelve a cerrar nada.
         self.assertEqual(cierre.procesar_pendientes(), {"cerradas": 0, "resubastadas": 0})

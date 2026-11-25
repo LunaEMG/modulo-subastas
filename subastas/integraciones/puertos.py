@@ -42,9 +42,7 @@ class ProveedorLogistico(ABC):
 @dataclass(frozen=True)
 class DocumentosIdentidad:
     """S-31: opcionales porque el registro aún no los pide; se reenvían sin guardarse.
-
-    `tarjeta` es la referencia del módulo de pagos, nunca el número.
-    """
+    `tarjeta` es la referencia del módulo de pagos, nunca el número."""
 
     identificacion_oficial: object | None = None
     curp: str = ""

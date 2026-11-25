@@ -31,7 +31,6 @@
   <img class="hero-foto" src="{% static 'subastas/portada/cronografo.jpg' %}" alt="Reloj cronógrafo dentro de una caja de madera" width="640" height="480" fetchpriority="high">
 </section>
 
-{# Cada categoría lleva a Entrar; «next» devuelve al listado ya filtrado después del código. Las tarjetas salen de tarjetas_categoria. #}
 <section class="portada-seccion" aria-labelledby="titulo-categorias">
   <h2 id="titulo-categorias">Categorías</h2>
   <p class="entradilla">Entra para ver las subastas abiertas de cada categoría.</p>
@@ -69,7 +68,7 @@
   </ul>
 </section>
 {% else %}
-{# Píldora de búsqueda, en claro bajo la banda del saludo: envía «texto» al buscador existente (CU-08). #}
+{# Envía «texto» al buscador existente (CU-08). #}
 <form class="buscador-inicio" method="get" action="{{ buscar }}" role="search">
   <div class="seg-texto"><label for="id_texto_inicio" class="solo-lector">Buscar</label><input type="search" name="texto" id="id_texto_inicio" enterkeyhint="search"></div>
   <button class="boton boton-buscar" type="submit">Buscar</button>

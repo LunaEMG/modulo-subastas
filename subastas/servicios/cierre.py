@@ -132,9 +132,7 @@ def vencer_pago_y_resubastar(adjudicacion_id: int) -> Subasta:
 
 def procesar_pendientes() -> dict:
     """CU-15 y CU-16 para todo lo vencido, uno por transacción.
-
-    Lo que otra petición ya procesó lo rechaza su regla y se omite.
-    """
+    Lo que otra petición ya procesó lo rechaza su regla y se omite."""
     instante = reloj.ahora()
     resultado = {"cerradas": 0, "resubastadas": 0}
     por_cerrar = Subasta.objects.filter(
